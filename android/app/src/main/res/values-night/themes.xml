@@ -1,0 +1,18 @@
+<resources>
+    <style name="Theme.Nufo" parent="android:Theme.Material.NoActionBar">
+        <item name="android:windowBackground">@color/nufo_background</item>
+        <item name="android:statusBarColor">@android:color/transparent</item>
+        <item name="android:navigationBarColor">@android:color/transparent</item>
+    </style>
+
+    <!-- Launch theme: animated mark on Nufo green, then MainActivity switches to Theme.Nufo. -->
+    <style name="Theme.Nufo.Starting" parent="Theme.SplashScreen">
+        <item name="windowSplashScreenBackground">@color/nufo_background</item>
+        <item name="windowSplashScreenAnimatedIcon">@drawable/avd_splash</item>
+        <item name="windowSplashScreenIconBackgroundColor">@color/nufo_green</item>
+        <item name="windowSplashScreenAnimationDuration">700</item>
+        <item name="postSplashScreenTheme">@style/Theme.Nufo</item>
+    </style>
+    <color name="nufo_background">#0E130F</color>
+    <color name="nufo_green">#2E7D32</color>
+</resources>

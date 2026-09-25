@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Scanner-frame corners around a leaf. Everything sits inside the 66dp adaptive-icon safe zone. -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="108dp" android:height="108dp" android:viewportWidth="108" android:viewportHeight="108">
+        <path android:pathData="M31,41 V37 Q31,31 37,31 H41" android:strokeColor="#FFFFFFFF" android:strokeWidth="4" android:strokeLineCap="round" android:strokeLineJoin="round" android:fillColor="#00000000" />
+        <path android:pathData="M67,31 H71 Q77,31 77,37 V41" android:strokeColor="#FFFFFFFF" android:strokeWidth="4" android:strokeLineCap="round" android:strokeLineJoin="round" android:fillColor="#00000000" />
+        <path android:pathData="M31,67 V71 Q31,77 37,77 H41" android:strokeColor="#FFFFFFFF" android:strokeWidth="4" android:strokeLineCap="round" android:strokeLineJoin="round" android:fillColor="#00000000" />
+        <path android:pathData="M77,67 V71 Q77,77 71,77 H67" android:strokeColor="#FFFFFFFF" android:strokeWidth="4" android:strokeLineCap="round" android:strokeLineJoin="round" android:fillColor="#00000000" />
+    <path android:fillColor="#FFFFFFFF"
+        android:pathData="M66,40 C66,40 47,39 42,52 C38,62 44,68 44,68 C44,68 58,70 63,57 C67,47 66,40 66,40 Z" />
+    <path android:pathData="M44,68 C49,59 55,52 62,45" android:strokeColor="#FF2E7D32" android:strokeWidth="2.6" android:strokeLineCap="round" android:fillColor="#00000000" />
+</vector>
