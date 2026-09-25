@@ -115,6 +115,19 @@ ANDROID_SERIAL=emulator-5554 ./gradlew installBenchmark            # release cod
   OkHttp + kotlinx.serialization instead of Retrofit. The app is small enough that the frameworks would
   add build time without adding value.
 
+### Release (Android)
+
+- Version 1.0.0 (versionCode 1). Download page: https://nufo.vercel.app. Builds are attached to the
+  GitHub release `v1.0.0`.
+- Signing key: `~/.android/nufo-release.jks`, described by `~/.android/nufo-release.properties`
+  (storeFile, storePassword, keyAlias, keyPassword), both outside the repo. Another location: set
+  `NUFO_SIGNING` to the properties file. **Back both up**: without the key, no updates can be published.
+- `./gradlew assembleRelease` gives one APK per CPU type (`arm64-v8a` for nearly all phones,
+  `armeabi-v7a` for old 32-bit ones, `x86_64` for emulators). `./gradlew bundleRelease` gives the `.aab`
+  for Google Play (built separately: AGP cannot split APKs while bundling).
+- CI (`.github/workflows/android.yml`) runs unit tests, lint and an unsigned release build on every push
+  to `android/`.
+
 ## iOS
 
 Requirements: macOS with Xcode 15+ and [XcodeGen](https://github.com/yonaskolb/XcodeGen).
@@ -131,8 +144,10 @@ xcrun simctl launch booted com.nufo.app
 
 - In the Simulator, VisionKit live scanning isn't available, so the scanner switches to a mock scanner
   (type a barcode or tap a sample).
-- **Not yet compiled.** The iOS project was written on Windows, where no Xcode is available. It mirrors the
-  Android app, which is built and verified, but expect a round of compiler fixes on first `xcodebuild`.
+- **Not yet compiled.** The iOS project was written on Windows, where no Xcode is available.
+  `.github/workflows/ios.yml` builds and tests it on a GitHub macOS runner (on changes to `ios/`, or run it
+  by hand from the Actions tab); expect a round of compiler fixes on its first run.
+- Not yet ported from Android: on-device dish recognition (FoodClassifier) and the bundled dish table.
 
 ## Motion and branding
 
