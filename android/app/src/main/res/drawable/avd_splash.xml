@@ -1,0 +1,78 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  Opening animation (700 ms). Its first frame is exactly the launcher icon, so the launcher zoom hands
+  straight over with no second pop. Then one beat that tells the product story: the scanner corners
+  focus in, a scan line sweeps across, and the leaf pulses once as if recognized. Curves are the app
+  Motion tokens (res/interpolator/nufo_ease_*.xml).
+-->
+<animated-vector xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:aapt="http://schemas.android.com/aapt">
+    <aapt:attr name="android:drawable">
+        <vector android:width="108dp" android:height="108dp" android:viewportWidth="108" android:viewportHeight="108">
+            <!-- Nufo green disc, drawn here because animated splash icons get no platform background on every OS version. -->
+            <path android:fillColor="#FF2E7D32" android:pathData="M54,18 A36,36 0 1,1 53.99,18 Z" />
+            <group android:name="tl">
+                <path android:pathData="M31,41 V37 Q31,31 37,31 H41" android:strokeColor="#FFFFFFFF" android:strokeWidth="4" android:strokeLineCap="round" android:strokeLineJoin="round" />
+            </group>
+            <group android:name="tr">
+                <path android:pathData="M67,31 H71 Q77,31 77,37 V41" android:strokeColor="#FFFFFFFF" android:strokeWidth="4" android:strokeLineCap="round" android:strokeLineJoin="round" />
+            </group>
+            <group android:name="bl">
+                <path android:pathData="M31,67 V71 Q31,77 37,77 H41" android:strokeColor="#FFFFFFFF" android:strokeWidth="4" android:strokeLineCap="round" android:strokeLineJoin="round" />
+            </group>
+            <group android:name="br">
+                <path android:pathData="M77,67 V71 Q77,77 71,77 H67" android:strokeColor="#FFFFFFFF" android:strokeWidth="4" android:strokeLineCap="round" android:strokeLineJoin="round" />
+            </group>
+            <group android:name="leaf" android:pivotX="54" android:pivotY="54">
+                <path android:fillColor="#FFFFFFFF"
+                    android:pathData="M66,40 C66,40 47,39 42,52 C38,62 44,68 44,68 C44,68 58,70 63,57 C67,47 66,40 66,40 Z" />
+                <path android:pathData="M44,68 C49,59 55,52 62,45" android:strokeColor="#FF2E7D32" android:strokeWidth="2.6" android:strokeLineCap="round" />
+            </group>
+            <group android:name="scan" android:translateY="-17">
+                <path android:name="scanp" android:pathData="M35,54 H73" android:strokeColor="#FFC8E6C9" android:strokeWidth="2" android:strokeLineCap="round" android:strokeAlpha="0" />
+            </group>
+        </vector>
+    </aapt:attr>
+
+    <!-- Corners focus: 3 units in (180 ms ease-out), then settle back (240 ms ease-in-out). -->
+    <target android:name="tl"><aapt:attr name="android:animation"><set>
+        <objectAnimator android:propertyName="translateX" android:valueFrom="0" android:valueTo="3" android:duration="180" android:interpolator="@interpolator/nufo_ease_out" />
+        <objectAnimator android:propertyName="translateY" android:valueFrom="0" android:valueTo="3" android:duration="180" android:interpolator="@interpolator/nufo_ease_out" />
+        <objectAnimator android:propertyName="translateX" android:valueFrom="3" android:valueTo="0" android:startOffset="180" android:duration="240" android:interpolator="@interpolator/nufo_ease_in_out" />
+        <objectAnimator android:propertyName="translateY" android:valueFrom="3" android:valueTo="0" android:startOffset="180" android:duration="240" android:interpolator="@interpolator/nufo_ease_in_out" />
+    </set></aapt:attr></target>
+    <target android:name="tr"><aapt:attr name="android:animation"><set>
+        <objectAnimator android:propertyName="translateX" android:valueFrom="0" android:valueTo="-3" android:duration="180" android:interpolator="@interpolator/nufo_ease_out" />
+        <objectAnimator android:propertyName="translateY" android:valueFrom="0" android:valueTo="3" android:duration="180" android:interpolator="@interpolator/nufo_ease_out" />
+        <objectAnimator android:propertyName="translateX" android:valueFrom="-3" android:valueTo="0" android:startOffset="180" android:duration="240" android:interpolator="@interpolator/nufo_ease_in_out" />
+        <objectAnimator android:propertyName="translateY" android:valueFrom="3" android:valueTo="0" android:startOffset="180" android:duration="240" android:interpolator="@interpolator/nufo_ease_in_out" />
+    </set></aapt:attr></target>
+    <target android:name="bl"><aapt:attr name="android:animation"><set>
+        <objectAnimator android:propertyName="translateX" android:valueFrom="0" android:valueTo="3" android:duration="180" android:interpolator="@interpolator/nufo_ease_out" />
+        <objectAnimator android:propertyName="translateY" android:valueFrom="0" android:valueTo="-3" android:duration="180" android:interpolator="@interpolator/nufo_ease_out" />
+        <objectAnimator android:propertyName="translateX" android:valueFrom="3" android:valueTo="0" android:startOffset="180" android:duration="240" android:interpolator="@interpolator/nufo_ease_in_out" />
+        <objectAnimator android:propertyName="translateY" android:valueFrom="-3" android:valueTo="0" android:startOffset="180" android:duration="240" android:interpolator="@interpolator/nufo_ease_in_out" />
+    </set></aapt:attr></target>
+    <target android:name="br"><aapt:attr name="android:animation"><set>
+        <objectAnimator android:propertyName="translateX" android:valueFrom="0" android:valueTo="-3" android:duration="180" android:interpolator="@interpolator/nufo_ease_out" />
+        <objectAnimator android:propertyName="translateY" android:valueFrom="0" android:valueTo="-3" android:duration="180" android:interpolator="@interpolator/nufo_ease_out" />
+        <objectAnimator android:propertyName="translateX" android:valueFrom="-3" android:valueTo="0" android:startOffset="180" android:duration="240" android:interpolator="@interpolator/nufo_ease_in_out" />
+        <objectAnimator android:propertyName="translateY" android:valueFrom="-3" android:valueTo="0" android:startOffset="180" android:duration="240" android:interpolator="@interpolator/nufo_ease_in_out" />
+    </set></aapt:attr></target>
+    <!-- Scan line sweeps top to bottom (120 to 560 ms), fading in and out at the ends. -->
+    <target android:name="scan"><aapt:attr name="android:animation">
+        <objectAnimator android:propertyName="translateY" android:valueFrom="-17" android:valueTo="17" android:startOffset="120" android:duration="440" android:interpolator="@interpolator/nufo_ease_in_out" />
+    </aapt:attr></target>
+    <target android:name="scanp"><aapt:attr name="android:animation"><set>
+        <objectAnimator android:propertyName="strokeAlpha" android:valueFrom="0" android:valueTo="1" android:startOffset="120" android:duration="120" android:interpolator="@interpolator/nufo_ease_out" />
+        <objectAnimator android:propertyName="strokeAlpha" android:valueFrom="1" android:valueTo="0" android:startOffset="440" android:duration="120" android:interpolator="@interpolator/nufo_ease_out" />
+    </set></aapt:attr></target>
+
+    <!-- Recognized: the leaf pulses once (to 108 percent, back to rest). -->
+    <target android:name="leaf"><aapt:attr name="android:animation"><set>
+        <objectAnimator android:propertyName="scaleX" android:valueFrom="1" android:valueTo="1.08" android:startOffset="420" android:duration="130" android:interpolator="@interpolator/nufo_ease_out" />
+        <objectAnimator android:propertyName="scaleY" android:valueFrom="1" android:valueTo="1.08" android:startOffset="420" android:duration="130" android:interpolator="@interpolator/nufo_ease_out" />
+        <objectAnimator android:propertyName="scaleX" android:valueFrom="1.08" android:valueTo="1" android:startOffset="550" android:duration="150" android:interpolator="@interpolator/nufo_ease_in_out" />
+        <objectAnimator android:propertyName="scaleY" android:valueFrom="1.08" android:valueTo="1" android:startOffset="550" android:duration="150" android:interpolator="@interpolator/nufo_ease_in_out" />
+    </set></aapt:attr></target>
+</animated-vector>

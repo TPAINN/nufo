@@ -1,0 +1,318 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name" translatable="false">Nufo</string>
+    <string name="tagline">Easy • Quick • Accurate</string>
+
+    <!-- Navigation -->
+    <string name="nav_scan">Scan</string>
+    <string name="nav_search">Search</string>
+    <string name="nav_history">History</string>
+    <string name="nav_settings">Settings</string>
+    <string name="back">Back</string>
+    <string name="cancel">Cancel</string>
+    <string name="clear">Clear</string>
+    <string name="retry">Retry</string>
+    <string name="undo">Undo</string>
+
+    <!-- Welcome -->
+    <string name="welcome_f1_title">Scan anything</string>
+    <string name="welcome_f1_body">Barcodes, meals and labels in seconds.</string>
+    <string name="welcome_f2_title">Real data only</string>
+    <string name="welcome_f2_body">Straight from Open Food Facts and USDA. Missing means missing.</string>
+    <string name="welcome_f3_title">No account, ever</string>
+    <string name="welcome_f3_body">Your history never leaves this phone.</string>
+    <string name="welcome_start">Get started</string>
+    <string name="welcome_legal">Nutrition information, not medical advice.</string>
+
+    <!-- Home -->
+    <string name="home_title">What are you eating?</string>
+    <string name="home_subtitle">Scan a barcode or photograph your plate.</string>
+    <string name="home_scan">Scan barcode</string>
+    <string name="home_scan_label">Scan a barcode</string>
+    <string name="home_photo">Take photo</string>
+    <string name="home_gallery">Gallery</string>
+    <string name="home_search">Search foods, brands, meals…</string>
+    <string name="home_popular">Popular in Greece</string>
+    <string name="home_recent">Recent scans</string>
+    <string name="home_empty_title">Nothing scanned yet</string>
+    <string name="home_empty_body">Your scans appear here and stay on this device.</string>
+    <string name="home_trust_title">Data you can check</string>
+    <string name="home_trust_body">Every result shows its source and date. No account. Nothing leaves your phone except what you search for.</string>
+    <string name="kcal_per_100g">%1$s kcal / 100 g</string>
+    <string name="kcal_na">kcal not available</string>
+    <string name="open_product">Open %1$s</string>
+
+    <!-- Scanner -->
+    <string name="scan_permission_title">Camera access lets Nufo read barcodes.</string>
+    <string name="scan_permission_body">Frames are analysed on this phone and never uploaded.</string>
+    <string name="scan_allow">Allow camera</string>
+    <string name="scan_close">Close scanner</string>
+    <string name="scan_flash_on">Turn flash on</string>
+    <string name="scan_flash_off">Turn flash off</string>
+    <string name="scan_align">Align the barcode inside the frame</string>
+    <string name="scan_gallery">Gallery</string>
+    <string name="scan_type">Type code</string>
+    <string name="scan_enter">Enter barcode</string>
+    <string name="scan_digits">8–14 digits</string>
+    <string name="scan_lookup">Look up</string>
+    <string name="scan_samples">Debug samples</string>
+
+    <!-- Photo -->
+    <string name="photo_title">Identify food</string>
+    <string name="photo_change">Change</string>
+    <string name="photo_change_label">Change photo</string>
+    <string name="photo_selected">Selected photo</string>
+    <string name="photo_camera">Camera</string>
+    <string name="photo_gallery">Gallery</string>
+    <string name="photo_prompt">Take or choose a photo of a meal, a food, or its packaging.</string>
+    <string name="photo_analyzing">Looking closely… (on this device)</string>
+    <string name="photo_open_failed">Couldn\'t open that image.</string>
+    <string name="photo_failed">On-device analysis failed. You can still type what it is.</string>
+    <string name="photo_found_barcode">Found barcode %1$s — opening…</string>
+    <string name="photo_looks_like">Looks like %1$s (%2$d%% sure). Confirm or refine it.</string>
+    <string name="photo_not_sure">Not fully sure. What is this?</string>
+    <string name="photo_unknown">Couldn\'t recognise this. What is it?</string>
+    <string name="photo_food_name">Food name</string>
+    <string name="photo_find">Find nutrition</string>
+    <string name="photo_portion_note">You can adjust the portion on the next screen.</string>
+
+    <!-- Result -->
+    <string name="unnamed_product">Unnamed product</string>
+    <string name="save_history">Save to history</string>
+    <string name="remove_history">Remove from history</string>
+    <string name="share">Share</string>
+    <string name="loading_nutrition">Loading nutrition</string>
+    <string name="not_found_title">Product not found</string>
+    <string name="not_found_body">Neither Open Food Facts nor USDA has barcode %1$s yet. You can search by name, or add it for everyone.</string>
+    <string name="not_found_body_generic">Neither Open Food Facts nor USDA has this item. Try searching by name.</string>
+    <string name="not_found_search">Search by name</string>
+    <string name="not_found_add">Add it to Open Food Facts</string>
+    <string name="trust_source">Source: %1$s</string>
+    <string name="trust_updated">Updated %1$s</string>
+    <string name="trust_completeness">Data %1$d%% complete</string>
+    <string name="sold_in_greece">Sold in Greece</string>
+    <string name="verdict_excellent">Excellent choice</string>
+    <string name="verdict_good">Good choice</string>
+    <string name="verdict_fair">Fair choice</string>
+    <string name="verdict_poor">Poor choice</string>
+    <string name="verdict_very_poor">Very poor choice</string>
+    <string name="nufo_score">Nufo Score</string>
+    <string name="nufo_score_cd">Nufo Score %1$d out of 100</string>
+    <string name="how_calculated">How is this calculated?</string>
+    <string name="nutriscore" translatable="false">Nutri-Score</string>
+    <string name="nova" translatable="false">NOVA</string>
+    <string name="ecoscore" translatable="false">Eco-Score</string>
+    <string name="nova_1">Unprocessed or minimally processed</string>
+    <string name="nova_2">Processed culinary ingredient</string>
+    <string name="nova_3">Processed food</string>
+    <string name="nova_4">Ultra-processed food</string>
+    <string name="nutri_explain">Overall nutritional quality, A (best) to E.</string>
+    <string name="eco_explain">Estimated environmental impact, A (lowest) to E.</string>
+    <string name="why_score">Why this score</string>
+    <string name="no_reasons">No penalties or bonuses from the data available.</string>
+    <string name="reason_nutri_b" translatable="false">Nutri-Score B</string>
+    <string name="reason_nutri_c" translatable="false">Nutri-Score C</string>
+    <string name="reason_nutri_d" translatable="false">Nutri-Score D</string>
+    <string name="reason_nutri_e" translatable="false">Nutri-Score E</string>
+    <string name="reason_nova_2">Processed ingredient</string>
+    <string name="reason_nova_3">Processed</string>
+    <string name="reason_nova_4">Ultra-processed</string>
+    <string name="reason_protein">High protein</string>
+    <string name="reason_fiber">High fibre</string>
+    <string name="reason_sugar">High sugar</string>
+    <string name="reason_salt">High salt</string>
+    <string name="reason_satfat">High saturated fat</string>
+    <string name="method_title">How Nufo scores</string>
+    <string name="method_intro">Every result starts at 100. Nufo only adjusts for data the source actually publishes — missing values never cost or earn points.</string>
+    <string name="method_rule_nutri" translatable="false">Nutri-Score B / C / D / E</string>
+    <string name="method_rule_nutri_delta" translatable="false">−5 / −15 / −30 / −45</string>
+    <string name="method_rule_nova" translatable="false">NOVA 2 / 3 / 4</string>
+    <string name="method_rule_nova_delta" translatable="false">−5 / −15 / −30</string>
+    <string name="method_rule_protein">Protein ≥ 10 g per 100 g</string>
+    <string name="method_rule_fiber">Fibre ≥ 5 g per 100 g</string>
+    <string name="method_rule_sugar">Sugar &gt; 10 g per 100 g</string>
+    <string name="method_rule_salt">Salt &gt; 1 g per 100 g</string>
+    <string name="method_rule_satfat">Saturated fat &gt; 5 g per 100 g</string>
+    <string name="method_official">Nutri-Score, NOVA and Eco-Score are shown exactly as published by Open Food Facts. Nufo never estimates them.</string>
+    <string name="portion">Portion</string>
+    <string name="portion_100g" translatable="false">100 g</string>
+    <string name="portion_100g_imperial" translatable="false">100 g (3.5 oz)</string>
+    <string name="portion_serving">Serving</string>
+    <string name="portion_serving_w">Serving · %1$s</string>
+    <string name="portion_bowl">Bowl · %1$s</string>
+    <string name="portion_plate">Plate · %1$s</string>
+    <string name="portion_custom">Custom</string>
+    <string name="one_serving">1 serving</string>
+    <string name="calories_for">Calories · %1$s</string>
+    <string name="kcal" translatable="false">kcal</string>
+    <string name="not_available">Not available</string>
+    <string name="macro_p">Protein</string>
+    <string name="macro_c">Carbs</string>
+    <string name="macro_f">Fat</string>
+    <string name="macro_split_cd">Energy from protein %1$d%%, carbs %2$d%%, fat %3$d%%</string>
+    <string name="macro_split_na">Macro split not available</string>
+    <string name="tab_nutrition">Nutrition</string>
+    <string name="tab_vitamins">Vitamins &amp; minerals</string>
+    <string name="tab_ingredients">Ingredients</string>
+    <string name="tab_additives">Additives</string>
+    <string name="tab_environment">Environment</string>
+    <string name="declaration">Nutrition declaration</string>
+    <string name="per_100g">per 100 g</string>
+    <string name="per_portion">per %1$s</string>
+    <string name="n_energy">Energy</string>
+    <string name="n_fat">Fat</string>
+    <string name="n_satfat">of which saturates</string>
+    <string name="n_carbs">Carbohydrate</string>
+    <string name="n_sugar">of which sugars</string>
+    <string name="n_fiber">Fibre</string>
+    <string name="n_protein">Protein</string>
+    <string name="n_salt">Salt</string>
+    <string name="level_low">Low</string>
+    <string name="level_medium">Medium</string>
+    <string name="level_high">High</string>
+    <string name="levels_note">Colours follow UK FSA front-of-pack thresholds for foods, per 100 g.</string>
+    <string name="insights_title">Highlights (per 100 g)</string>
+    <string name="insight_high_protein">High protein</string>
+    <string name="insight_good_fiber">Good source of fibre</string>
+    <string name="insight_low_fiber">Low fibre</string>
+    <string name="insight_high_sugar">High sugar</string>
+    <string name="insight_low_sugar">Low sugar</string>
+    <string name="insight_high_sodium">High sodium</string>
+    <string name="insight_low_sodium">Low sodium</string>
+    <string name="insight_high_satfat">High saturated fat</string>
+    <string name="insight_ultra">Ultra-processed</string>
+    <string name="insight_unprocessed">Unprocessed</string>
+    <string name="no_micros">Not available — %1$s has no vitamin or mineral data for this product.</string>
+    <string name="ingredients">Ingredients</string>
+    <string name="no_ingredients">Not available — %1$s has no ingredient list for this product.</string>
+    <string name="allergens">Allergens</string>
+    <string name="no_allergens">None declared by %1$s.</string>
+    <string name="no_additives">No additives listed by %1$s.</string>
+    <string name="eco_na_body">%1$s has not computed an Eco-Score for this product.</string>
+    <string name="labels">Labels</string>
+    <string name="categories">Categories</string>
+    <string name="footer_source">Source: %1$s • Last updated: %2$s</string>
+    <string name="footer_odbl">Data © Open Food Facts contributors, licensed under ODbL.</string>
+    <string name="footer_usda">Public-domain data from the U.S. Department of Agriculture.</string>
+    <string name="disclaimer">Nufo provides nutrition information, not medical advice.</string>
+    <string name="contains">Contains %1$s</string>
+    <string name="diet_not_vegan">Not vegan: declares animal-derived allergens.</string>
+    <string name="diet_not_vegetarian">Not vegetarian: contains fish or seafood.</string>
+    <string name="diet_note_keto">High in carbs for keto (%1$s g per 100 g).</string>
+    <string name="diet_note_low_sodium">Not low-sodium: %1$s g salt per 100 g.</string>
+    <string name="share_score">Nufo Score %1$d/100</string>
+    <string name="share_kcal">%1$d kcal per 100 g</string>
+    <string name="usda_english">English-language data</string>
+
+    <!-- Search -->
+    <string name="search_title">Search</string>
+    <string name="search_placeholder">Foods, brands, meals…</string>
+    <string name="search_clear">Clear search</string>
+    <string name="filters_show">Show filters</string>
+    <string name="filters_hide">Hide filters</string>
+    <string name="search_hint">Search Open Food Facts and USDA at once, in Greek or English.\nTry «φέτα», «γιαούρτι» or «olive oil».</string>
+    <string name="search_none">No results for «%1$s».</string>
+    <string name="search_none_filtered">No results for «%1$s» with these filters.</string>
+    <string name="search_error">Couldn\'t reach the food databases. Check your connection.</string>
+    <string name="f_category">Category</string>
+    <string name="f_origin">Origin</string>
+    <string name="f_greek_only">Only products sold in Greece</string>
+    <string name="f_diet">Diet &amp; allergens</string>
+    <string name="f_exclude_mine">Exclude my allergens</string>
+    <string name="f_set_allergens">Set allergens in Settings</string>
+    <string name="f_note">Category, origin, diet and allergen filters use Open Food Facts tags, so USDA results are hidden.</string>
+    <string name="cat_dairies">Dairy</string>
+    <string name="cat_cheeses">Cheese</string>
+    <string name="cat_yogurts">Yogurt</string>
+    <string name="cat_olive_oils">Olive oil</string>
+    <string name="cat_beverages">Drinks</string>
+    <string name="cat_snacks">Snacks</string>
+    <string name="cat_breakfasts">Breakfast</string>
+    <string name="cat_cereals">Cereals &amp; potatoes</string>
+    <string name="cat_fruit_veg">Fruit &amp; veg</string>
+    <string name="cat_meat">Meat</string>
+    <string name="cat_desserts">Desserts</string>
+
+    <!-- History -->
+    <string name="history_title">History</string>
+    <string name="history_clear_all">Clear all</string>
+    <string name="history_swipe">Swipe left to remove</string>
+    <string name="history_empty_title">No scans yet</string>
+    <string name="history_empty_body">Everything you scan is saved here, offline, on this phone only.</string>
+    <string name="history_scan">Scan something</string>
+    <string name="history_removed">Removed %1$s</string>
+    <string name="history_clear_title">Clear all history?</string>
+    <plurals name="history_clear_body">
+        <item quantity="one">This removes %d saved product from this device. It can\'t be undone.</item>
+        <item quantity="other">This removes %d saved products from this device. It can\'t be undone.</item>
+    </plurals>
+    <string name="history_remove_action">Remove from history</string>
+    <string name="history_per100">per 100 g · %1$s</string>
+    <string name="n_a">n/a</string>
+
+    <!-- Settings -->
+    <string name="settings_title">Settings</string>
+    <string name="s_units">Units</string>
+    <string name="s_metric">Metric</string>
+    <string name="s_imperial">Imperial</string>
+    <string name="s_theme">Theme</string>
+    <string name="s_system">System</string>
+    <string name="s_light">Light</string>
+    <string name="s_dark">Dark</string>
+    <string name="s_language">Language</string>
+    <string name="s_language_note">Product names and ingredients appear in this language whenever Open Food Facts has them.</string>
+    <string name="s_language_system">Follows your phone. Change it in Android\'s app language settings.</string>
+    <string name="s_diet">Diet preference</string>
+    <string name="diet_none">None</string>
+    <string name="diet_vegetarian">Vegetarian</string>
+    <string name="diet_vegan">Vegan</string>
+    <string name="diet_keto">Keto</string>
+    <string name="diet_low_sodium_name">Low-sodium</string>
+    <string name="s_allergens">Allergen warnings</string>
+    <string name="s_allergens_note">Products that declare these get a warning banner.</string>
+    <string name="s_sources">Data sources</string>
+    <string name="s_off_body">Packaged products, Nutri-Score, NOVA, Eco-Score. Open Database License (ODbL).</string>
+    <string name="s_usda_body">Generic and branded foods. Public domain.</string>
+    <string name="s_mlkit_body">Barcode, image and text recognition run on this device.</string>
+    <string name="s_privacy">No account. No tracking. Only barcodes and search terms are sent to these sources.</string>
+    <string name="s_open_site">Open %1$s website</string>
+    <string name="s_about">How Nufo works</string>
+    <string name="s_about_body">Scoring method, data sources and privacy</string>
+    <string name="s_data">Your data</string>
+    <string name="s_clear">Clear history and cache</string>
+    <string name="s_clear_title">Clear local data?</string>
+    <string name="s_clear_body">Removes all saved scans and cached images from this phone. Settings are kept.</string>
+    <string name="s_version">Version %1$s</string>
+    <string name="about_privacy_title">Your privacy</string>
+    <string name="about_privacy_body">Nufo has no accounts, no analytics and no ads. Photos are analysed on your phone. History is stored only on this device and is excluded from cloud backups.</string>
+    <string name="about_data_title">Where the data comes from</string>
+    <string name="about_data_body">Packaged products come from Open Food Facts, a non-profit database built by volunteers and manufacturers, with thousands of Greek products. Generic foods come from the U.S. Department of Agriculture. Every result names its source and last update.</string>
+    <string name="about_missing_title">When a product is missing</string>
+    <string name="about_missing_body">Nufo never guesses. You\'ll see «Not available», and you can add the product to Open Food Facts so it\'s there for everyone.</string>
+    <string name="short_p">P</string>
+    <string name="short_c">C</string>
+    <string name="short_f">F</string>
+    <string name="offline_banner">You\'re offline — saved products still open</string>
+    <string name="cached_notice">Offline copy saved on %1$s. Reconnect for the latest data.</string>
+    <string name="error_offline_title">You\'re offline</string>
+    <string name="error_offline_body">This product isn\'t saved on your phone yet. Connect to the internet and try again.</string>
+    <string name="error_server_title">The food database isn\'t responding</string>
+    <string name="error_server_body">It\'s on their side, not yours. Try again in a moment.</string>
+    <string name="identified_title">Identified, but no nutrition data</string>
+    <string name="identified_body">%1$s lists this barcode as «%2$s». No food database has its nutrition facts yet.</string>
+    <string name="identified_search">Search «%1$s»</string>
+    <string name="prices_title">Prices</string>
+    <string name="prices_source">Crowdsourced receipts and shelf photos via Open Prices.</string>
+    <string name="prices_none">No price reports yet for this product.</string>
+    <string name="prices_failed">Prices couldn\'t be loaded right now.</string>
+    <string name="prices_where" translatable="false">%1$s · %2$s</string>
+    <string name="search_offline">Offline: showing products saved on this phone.</string>
+    <string name="search_offline_none">You\'re offline and nothing saved matches «%1$s».</string>
+    <string name="camera_error_title">The camera couldn\'t start</string>
+    <string name="camera_error_body">Another app may be using it. You can still type the barcode.</string>    <string name="loading_step_off">Checking Open Food Facts…</string>
+    <string name="loading_step_usda">Not there, checking USDA…</string>
+    <string name="loading_step_other">Checking other barcode databases…</string>
+    <string name="loading_slow">Taking longer than usual, still trying…</string>
+    <string name="search_loading">Searching Open Food Facts and USDA…</string>    <string name="photo_pick_one">Is it one of these?</string>
+    <string name="score_nutrients_only">No Nutri-Score or NOVA from the source, so this score reflects the nutrients only, not how processed it is.</string>
+</resources>

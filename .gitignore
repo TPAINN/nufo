@@ -1,0 +1,16 @@
+.DS_Store
+.env
+android/.gradle/
+android/build/
+android/app/build/
+android/local.properties
+android/.kotlin/
+android/.idea/
+ios/Nufo.xcodeproj/
+ios/build/
+ios/DerivedData/
+.claude/
+*.jks
+*.keystore
+nufo-release.properties
+ios/xcodebuild.log
