@@ -144,9 +144,11 @@ xcrun simctl launch booted com.nufo.app
 
 - In the Simulator, VisionKit live scanning isn't available, so the scanner switches to a mock scanner
   (type a barcode or tap a sample).
-- **Not yet compiled.** The iOS project was written on Windows, where no Xcode is available.
-  `.github/workflows/ios.yml` builds and tests it on a GitHub macOS runner (on changes to `ios/`, or run it
-  by hand from the Actions tab); expect a round of compiler fixes on its first run.
+- **Built and tested in CI.** The iOS project is written on Windows (no Xcode); `.github/workflows/ios.yml`
+  generates the project and runs the 20 unit tests on a GitHub macOS runner (on changes to `ios/`, or by
+  hand from the Actions tab). Last run: build and tests green.
+- **Distribution needs an Apple Developer account** (enrolment and signing are the owner's). With it, CI can
+  sign and upload to TestFlight, and the landing page's App Store badge becomes a real link.
 - Not yet ported from Android: on-device dish recognition (FoodClassifier) and the bundled dish table.
 
 ## Motion and branding
