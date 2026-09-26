@@ -76,7 +76,6 @@ import com.nufo.app.ui.theme.GreenDeep
 import com.nufo.app.ui.theme.LocalNufoColors
 import com.nufo.app.ui.theme.scoreColor
 
-private var homeLogoPlayed = false
 
 @Composable
 fun HomeScreen(
@@ -93,8 +92,8 @@ fun HomeScreen(
     ) {
         Row(Modifier.padding(horizontal = 20.dp).enterStagger(0), verticalAlignment = Alignment.CenterVertically) {
             Column(Modifier.weight(1f)) {
-                // Signature writes itself once per launch, not every time Home is revisited.
-                TegakiLogo(Modifier.height(46.dp), color = MaterialTheme.colorScheme.primary, animate = !homeLogoPlayed, speed = 1.5f, onFinished = { homeLogoPlayed = true })
+                // Signature writes itself on every opening (each new activity), not every time Home is revisited.
+                TegakiLogo(Modifier.height(46.dp), color = MaterialTheme.colorScheme.primary, animate = !vm.homeLogoPlayed, speed = 1.5f, onFinished = { vm.homeLogoPlayed = true })
                 Text(stringResource(R.string.tagline), style = MaterialTheme.typography.labelMedium, color = LocalNufoColors.current.textSecondary)
             }
         }
@@ -268,7 +267,8 @@ private fun RecentCard(p: Product, onClick: () -> Unit, modifier: Modifier) {
     NufoCard(modifier.width(150.dp), onClick = onClick, onClickLabel = stringResource(R.string.open_product, p.displayName())) {
         Box {
             ProductThumb(p, Modifier.fillMaxWidth().height(104.dp))
-            Box(
+            // No badge at all when there is too little data for a score.
+            if (com.nufo.app.data.Scoring.canScore(p)) Box(
                 Modifier.align(Alignment.TopEnd).padding(8.dp).size(30.dp).clip(CircleShape).background(scoreColor(p.nufoScore)),
                 contentAlignment = Alignment.Center,
             ) { Text(p.nufoScore.toString(), style = MaterialTheme.typography.labelMedium, color = Color.White) }
@@ -307,8 +307,10 @@ fun ProductThumb(imageUrl: String?, name: String, modifier: Modifier, hero: Bool
             var fullLoaded by remember(imageUrl) { mutableStateOf(false) }
             // Packshots sit on white, with a little air around them.
             val frame = Modifier.fillMaxSize().then(if (loaded) Modifier.background(Color.White).padding(if (hero) 16.dp else 8.dp) else Modifier)
+            // One decoded 400 px bitmap for every place this photo appears: a list thumbnail and the hero that
+            // opens from it share the memory-cache entry, so the photo is there from the first frame of the push.
             AsyncImage(
-                ImageRequest.Builder(context).data(offImage(imageUrl, "400")).crossfade(220).build(),
+                ImageRequest.Builder(context).data(offImage(imageUrl, "400")).size(coil3.size.Size.ORIGINAL).crossfade(220).build(),
                 contentDescription = null, contentScale = ContentScale.Fit,
                 onSuccess = { loaded = true },
                 onError = { android.util.Log.w("Nufo", "Image failed: $imageUrl", it.result.throwable) },

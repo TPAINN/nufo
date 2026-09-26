@@ -4,6 +4,20 @@ import android.content.Intent
 import android.net.Uri
 import android.os.Build
 import android.provider.Settings as AndroidSettings
+import androidx.compose.animation.AnimatedContent
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.SizeTransform
+import androidx.compose.animation.expandVertically
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.shrinkVertically
+import androidx.compose.foundation.selection.toggleable
+import androidx.compose.material3.Button
+import androidx.compose.material3.OutlinedButton
+import androidx.compose.material3.Switch
+import com.nufo.app.UpdateState
+import com.nufo.app.ui.theme.Motion
+import com.nufo.app.ui.theme.nufoSpring
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -22,6 +36,7 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.outlined.KeyboardArrowRight
 import androidx.compose.material.icons.automirrored.outlined.OpenInNew
+import androidx.compose.material.icons.outlined.DeleteOutline
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.FilterChip
 import androidx.compose.material3.Icon
@@ -134,8 +149,16 @@ fun SettingsScreen(vm: NufoViewModel) {
                 Icon(Icons.AutoMirrored.Outlined.KeyboardArrowRight, null, tint = LocalNufoColors.current.textSecondary)
             }
         }
-        Group(stringResource(R.string.s_data), 7) {
-            TextButton({ confirmClear = true }) { Text(stringResource(R.string.s_clear), color = GradeE) }
+        Group(stringResource(R.string.s_updates), 7) { UpdatesSection(vm, s.autoUpdates) { open(it) } }
+        Group(stringResource(R.string.s_data), 8) {
+            Row(
+                Modifier.fillMaxWidth().clickable(role = Role.Button) { confirmClear = true }.padding(vertical = 4.dp),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(12.dp),
+            ) {
+                Icon(Icons.Outlined.DeleteOutline, null, tint = GradeE)
+                Text(stringResource(R.string.s_clear), style = MaterialTheme.typography.bodyLarge, color = GradeE)
+            }
         }
         Text(
             stringResource(R.string.disclaimer) + " " + stringResource(R.string.s_version, BuildConfig.VERSION_NAME),
@@ -157,6 +180,50 @@ fun SettingsScreen(vm: NufoViewModel) {
         },
         dismissButton = { TextButton({ confirmClear = false }) { Text(stringResource(R.string.cancel)) } },
     )
+}
+
+@Composable
+private fun UpdatesSection(vm: NufoViewModel, auto: Boolean, onDownload: (String) -> Unit) {
+    val state by vm.update.collectAsStateWithLifecycle()
+    Row(
+        Modifier.fillMaxWidth().toggleable(auto, role = Role.Switch, onValueChange = vm::setAutoUpdates),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        Column(Modifier.weight(1f)) {
+            Text(stringResource(R.string.s_auto_updates), style = MaterialTheme.typography.bodyLarge)
+            Text(stringResource(R.string.s_auto_updates_body), style = MaterialTheme.typography.labelMedium, color = LocalNufoColors.current.textSecondary)
+        }
+        Switch(auto, onCheckedChange = null)
+    }
+    // Manual checking is revealed only when the automatic one is off; an available update always shows.
+    AnimatedVisibility(
+        visible = !auto || state is UpdateState.Available,
+        enter = expandVertically(nufoSpring()) + fadeIn(Motion.fadeInSpec(delay = Motion.FAST / 3)),
+        exit = shrinkVertically(nufoSpring()) + fadeOut(Motion.fadeOutSpec()),
+    ) {
+        Column(Modifier.padding(top = 12.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+            val available = state as? UpdateState.Available
+            if (available != null) {
+                Button({ onDownload(available.update.url) }, Modifier.fillMaxWidth()) {
+                    Text(stringResource(R.string.s_update_download) + " " + available.update.version)
+                }
+            } else {
+                OutlinedButton(vm::checkForUpdatesNow, Modifier.fillMaxWidth(), enabled = state != UpdateState.Checking) {
+                    Text(stringResource(R.string.s_check_updates))
+                }
+            }
+            AnimatedContent(state, transitionSpec = { Motion.crossfade() using SizeTransform(clip = false) }, label = "update-status") { st ->
+                val text = when (st) {
+                    UpdateState.Idle -> null
+                    UpdateState.Checking -> stringResource(R.string.s_checking)
+                    UpdateState.UpToDate -> stringResource(R.string.s_up_to_date)
+                    UpdateState.Failed -> stringResource(R.string.s_update_failed)
+                    is UpdateState.Available -> stringResource(R.string.s_update_available, st.update.version)
+                }
+                if (text != null) Text(text, style = MaterialTheme.typography.labelMedium, color = LocalNufoColors.current.textSecondary, modifier = Modifier.fillMaxWidth())
+            }
+        }
+    }
 }
 
 @Composable

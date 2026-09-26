@@ -205,7 +205,7 @@ fun ResultScreen(vm: NufoViewModel, onBack: () -> Unit, onSearch: (String) -> Un
 @Composable
 private fun shareText(p: Product) = buildString {
     append(p.displayName()); p.brand?.let { append(" — $it") }; append("\n")
-    append(stringResource(R.string.share_score, p.nufoScore))
+    if (Scoring.canScore(p)) append(stringResource(R.string.share_score, p.nufoScore))
     p.nutriscoreGrade?.let { append(" · Nutri-Score ${it.uppercase()}") }
     p.novaGroup?.let { append(" · NOVA $it") }
     p.nutritionPer100g.calories?.let { append("\n" + stringResource(R.string.share_kcal, it.toInt())) }
@@ -508,11 +508,13 @@ private fun ProductDetail(p: Product, cachedAt: Long?, vm: NufoViewModel, units:
 private fun ScoreCard(p: Product, onMethod: () -> Unit, modifier: Modifier) {
     NufoCard(modifier.fillMaxWidth()) {
         Row(Modifier.padding(start = 18.dp, end = 18.dp, top = 18.dp), verticalAlignment = Alignment.CenterVertically) {
-            ScoreRing(p.nufoScore)
+            val scored = Scoring.canScore(p)
+            ScoreRing(p.nufoScore.takeIf { scored })
             Spacer(Modifier.width(18.dp))
             Column(Modifier.weight(1f)) {
                 Text(stringResource(R.string.nufo_score), style = MaterialTheme.typography.labelMedium, color = LocalNufoColors.current.textSecondary)
-                Text(stringResource(Verdict.of(p.nufoScore).label()), style = MaterialTheme.typography.headlineSmall, color = scoreTextColor(p.nufoScore))
+                if (scored) Text(stringResource(Verdict.of(p.nufoScore).label()), style = MaterialTheme.typography.headlineSmall, color = scoreTextColor(p.nufoScore))
+                else Text(stringResource(R.string.score_insufficient), style = MaterialTheme.typography.titleLarge, color = LocalNufoColors.current.textSecondary)
                 Spacer(Modifier.height(4.dp))
                 Row(
                     Modifier.clip(RoundedCornerShape(8.dp)).clickable(role = Role.Button, onClick = onMethod).padding(vertical = 4.dp),
@@ -527,14 +529,16 @@ private fun ScoreCard(p: Product, onMethod: () -> Unit, modifier: Modifier) {
         Column(Modifier.padding(18.dp), verticalArrangement = Arrangement.spacedBy(14.dp)) {
             Box(Modifier.fillMaxWidth().height(1.dp).background(LocalNufoColors.current.hairline))
             // Without the official grades a high score only means "no red flags in the nutrients"; say so.
-            if (p.nutriscoreGrade == null && p.novaGroup == null) {
+            if (!Scoring.canScore(p)) {
+                Text(stringResource(R.string.score_insufficient_body), style = MaterialTheme.typography.bodyMedium, color = LocalNufoColors.current.textSecondary)
+            } else if (p.nutriscoreGrade == null && p.novaGroup == null) {
                 Text(stringResource(R.string.score_nutrients_only), style = MaterialTheme.typography.bodyMedium, color = LocalNufoColors.current.textSecondary)
             }
             NutriScoreScale(p.nutriscoreGrade)
             NovaScale(p.novaGroup)
             EcoScoreScale(p.ecoscoreGrade)
             Box(Modifier.fillMaxWidth().height(1.dp).background(LocalNufoColors.current.hairline))
-            val reasons = Scoring.reasons(p)
+            val reasons = if (Scoring.canScore(p)) Scoring.reasons(p) else emptyList()
             if (reasons.isNotEmpty()) {
                 Text(stringResource(R.string.why_score), style = MaterialTheme.typography.labelLarge)
                 FlowRow(horizontalArrangement = Arrangement.spacedBy(6.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {

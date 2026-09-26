@@ -3,6 +3,8 @@ package com.nufo.app
 import android.app.Application
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
+import com.nufo.app.BuildConfig
+import com.nufo.app.data.AppUpdate
 import com.nufo.app.data.Diet
 import com.nufo.app.data.Identified
 import com.nufo.app.data.Lookup
@@ -15,6 +17,7 @@ import com.nufo.app.data.Settings
 import com.nufo.app.data.ThemeMode
 import com.nufo.app.data.Units
 import com.nufo.app.data.LookupStep
+import com.nufo.app.data.Updates
 import com.nufo.app.data.onlineFlow
 import com.nufo.app.ui.dataLang
 import kotlinx.coroutines.Job
@@ -29,6 +32,7 @@ import kotlinx.coroutines.withContext
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.drop
 import kotlinx.coroutines.flow.filter
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 
 sealed interface ResultState {
@@ -46,6 +50,14 @@ sealed interface PricesState {
     data object Failed : PricesState
 }
 
+sealed interface UpdateState {
+    data object Idle : UpdateState
+    data object Checking : UpdateState
+    data object UpToDate : UpdateState
+    data class Available(val update: AppUpdate) : UpdateState
+    data object Failed : UpdateState
+}
+
 data class SearchState(
     val query: String = "",
     val filters: SearchFilters = SearchFilters(),
@@ -58,6 +70,10 @@ data class SearchState(
     val offline: Boolean = false,
 )
 
+/** EAN-8, UPC-A, EAN-13 or GTIN-14 typed by hand (a damaged barcode the camera cannot read), or null. */
+fun typedBarcode(query: String): String? = query.filterNot { it.isWhitespace() }.takeIf { TYPED_BARCODE.matches(it) }
+private val TYPED_BARCODE = Regex("""\d{8}|\d{12,14}""")
+
 class NufoViewModel(app: Application) : AndroidViewModel(app) {
     private val repo = (app as NufoApp).repository
     private val store = (app as NufoApp).settings
@@ -66,6 +82,9 @@ class NufoViewModel(app: Application) : AndroidViewModel(app) {
     /** Null until the database has answered, so screens show loading rather than a false "empty". */
     val history: StateFlow<List<Product>?> = repo.history.stateIn(viewModelScope, SharingStarted.Eagerly, null)
     val online: StateFlow<Boolean> = app.onlineFlow().stateIn(viewModelScope, SharingStarted.Eagerly, true)
+
+    /** Activity-scoped: the Home signature replays on every opening, but not on tab switches or rotation. */
+    var homeLogoPlayed = false
 
     private val _result = MutableStateFlow<ResultState>(ResultState.Loading())
     val result = _result.asStateFlow()
@@ -77,7 +96,21 @@ class NufoViewModel(app: Application) : AndroidViewModel(app) {
     val search = _search.asStateFlow()
     private var searchJob: Job? = null
 
+    private val _update = MutableStateFlow<UpdateState>(UpdateState.Idle)
+    val update = _update.asStateFlow()
+    /** A newer version found by the daily automatic check, offered once in a dialog. */
+    private val _updatePrompt = MutableStateFlow<AppUpdate?>(null)
+    val updatePrompt = _updatePrompt.asStateFlow()
+
     init {
+        // At most one automatic check per day, on opening; a failure (offline) is retried at the next opening.
+        viewModelScope.launch {
+            if (!store.settings.first().autoUpdates) return@launch
+            if (System.currentTimeMillis() - store.lastUpdateCheck() < Updates.INTERVAL_MS) return@launch
+            val found = checkForUpdates() ?: return@launch
+            delay(1_500) // never on top of the opening animation
+            _updatePrompt.value = found
+        }
         // Coming back online: refresh whatever was answered from the offline fallback.
         viewModelScope.launch {
             online.drop(1).filter { it }.collect {
@@ -152,7 +185,7 @@ class NufoViewModel(app: Application) : AndroidViewModel(app) {
     fun setQuery(q: String) {
         _search.update { it.copy(query = q) }
         searchJob?.cancel()
-        if (q.isBlank()) { _search.update { it.copy(hits = emptyList(), loading = false, error = null, searched = false, offline = false) }; return }
+        if (q.isBlank() || typedBarcode(q) != null) { _search.update { it.copy(hits = emptyList(), loading = false, error = null, searched = false, offline = false) }; return }
         searchJob = viewModelScope.launch {
             delay(450) // debounce typing; a Greek query fans out into several requests
             runSearch()
@@ -193,6 +226,23 @@ class NufoViewModel(app: Application) : AndroidViewModel(app) {
         // Photographed plates are part of the history: they go too.
         withContext(Dispatchers.IO) { java.io.File(getApplication<android.app.Application>().filesDir, "photos").deleteRecursively() }
     }
+
+    /** Returns the newer version, if any; the result also drives the Settings status line. */
+    suspend fun checkForUpdates(): AppUpdate? {
+        _update.value = UpdateState.Checking
+        val r = repo.latestUpdate(BuildConfig.VERSION_NAME)
+        r.onSuccess { store.markUpdateChecked(System.currentTimeMillis()) }
+        val found = r.getOrNull()
+        _update.value = when {
+            r.isFailure -> UpdateState.Failed
+            found != null -> UpdateState.Available(found)
+            else -> UpdateState.UpToDate
+        }
+        return found
+    }
+    fun checkForUpdatesNow() = viewModelScope.launch { checkForUpdates() }
+    fun dismissUpdatePrompt() { _updatePrompt.value = null }
+    fun setAutoUpdates(on: Boolean) = viewModelScope.launch { store.setAutoUpdates(on) }
 
     fun finishOnboarding() = viewModelScope.launch { store.setOnboarded() }
     fun setUnits(u: Units) = viewModelScope.launch { store.setUnits(u) }

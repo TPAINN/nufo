@@ -34,7 +34,9 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.outlined.KeyboardArrowRight
 import androidx.compose.material.icons.outlined.Close
+import androidx.compose.material.icons.outlined.QrCodeScanner
 import androidx.compose.material.icons.outlined.Search
 import androidx.compose.material.icons.outlined.Tune
 import androidx.compose.material3.Badge
@@ -62,6 +64,7 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.nufo.app.NufoViewModel
+import com.nufo.app.typedBarcode
 import androidx.compose.material3.OutlinedButton
 import com.nufo.app.ui.photoKey
 import com.nufo.app.R
@@ -81,11 +84,12 @@ import com.nufo.app.ui.theme.novaColor
 import com.nufo.app.ui.theme.nufoSpring
 
 @Composable
-fun SearchScreen(vm: NufoViewModel, onOpen: (SearchHit) -> Unit) {
+fun SearchScreen(vm: NufoViewModel, onOpen: (SearchHit) -> Unit, onBarcode: (String) -> Unit) {
     val s by vm.search.collectAsStateWithLifecycle()
     val settings by vm.settings.collectAsStateWithLifecycle()
     var showFilters by remember { mutableStateOf(false) }
     val focus = LocalFocusManager.current
+    val typedBarcode = typedBarcode(s.query)
     Column(Modifier.fillMaxSize().statusBarsPadding()) {
         Text(stringResource(R.string.search_title), style = MaterialTheme.typography.headlineMedium, modifier = Modifier.padding(start = 20.dp, top = 16.dp, bottom = 12.dp))
         Row(Modifier.padding(horizontal = 20.dp), verticalAlignment = Alignment.CenterVertically) {
@@ -97,7 +101,7 @@ fun SearchScreen(vm: NufoViewModel, onOpen: (SearchHit) -> Unit) {
                     trailingIcon = { if (s.query.isNotEmpty()) IconButton({ vm.setQuery("") }) { Icon(Icons.Outlined.Close, stringResource(R.string.search_clear)) } },
                     singleLine = true,
                     keyboardOptions = KeyboardOptions(imeAction = ImeAction.Search),
-                    keyboardActions = KeyboardActions(onSearch = { focus.clearFocus() }),
+                    keyboardActions = KeyboardActions(onSearch = { focus.clearFocus(); typedBarcode?.let(onBarcode) }),
                     colors = TextFieldDefaults.colors(
                         focusedContainerColor = Color.Transparent, unfocusedContainerColor = Color.Transparent,
                         focusedIndicatorColor = Color.Transparent, unfocusedIndicatorColor = Color.Transparent,
@@ -117,6 +121,17 @@ fun SearchScreen(vm: NufoViewModel, onOpen: (SearchHit) -> Unit) {
         AnimatedVisibility(showFilters, enter = expandVertically(nufoSpring()) + fadeIn(Motion.fadeInSpec()), exit = shrinkVertically(nufoSpring()) + fadeOut(Motion.fadeOutSpec())) {
             Filters(s.filters, settings?.allergenAlerts.orEmpty(), vm::setFilters)
         }
+        AnimatedVisibility(typedBarcode != null, enter = expandVertically(nufoSpring()) + fadeIn(Motion.fadeInSpec()), exit = shrinkVertically(nufoSpring()) + fadeOut(Motion.fadeOutSpec())) {
+            var last by remember { mutableStateOf("") }
+            if (typedBarcode != null) last = typedBarcode
+            NufoCard(Modifier.fillMaxWidth().padding(start = 20.dp, end = 20.dp, top = 12.dp), onClick = { onBarcode(last) }, onClickLabel = stringResource(R.string.search_open_barcode, last)) {
+                Row(Modifier.padding(16.dp), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                    Icon(Icons.Outlined.QrCodeScanner, null, tint = MaterialTheme.colorScheme.primary)
+                    Text(stringResource(R.string.search_open_barcode, last), style = MaterialTheme.typography.bodyLarge, modifier = Modifier.weight(1f))
+                    Icon(Icons.AutoMirrored.Outlined.KeyboardArrowRight, null, tint = LocalNufoColors.current.textSecondary)
+                }
+            }
+        }
         Spacer(Modifier.height(8.dp))
         Box(Modifier.height(3.dp).fillMaxWidth()) {
             // Refreshing results already on screen: a thin bar, only if the refresh is not near-instant.
@@ -126,7 +141,7 @@ fun SearchScreen(vm: NufoViewModel, onOpen: (SearchHit) -> Unit) {
             }
         }
         when {
-            s.query.isBlank() -> Hint(stringResource(R.string.search_hint))
+            s.query.isBlank() || typedBarcode != null -> if (typedBarcode == null) Hint(stringResource(R.string.search_hint))
             s.error != null -> Column(Modifier.padding(horizontal = 24.dp, vertical = 28.dp)) {
                 Text(stringResource(R.string.search_error), style = MaterialTheme.typography.bodyLarge, color = LocalNufoColors.current.textSecondary)
                 Spacer(Modifier.height(14.dp))

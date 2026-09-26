@@ -38,6 +38,8 @@ class FoodApi(
         }
     }
 
+    suspend fun latestUpdate(current: String): AppUpdate? = Updates.parse(get(Updates.LATEST_RELEASE), current)
+
     suspend fun offProduct(barcode: String, lang: String): Product? {
         val url = "$OFF/api/v2/product/$barcode.json".toHttpUrl().newBuilder()
             .addQueryParameter("fields", OffParser.FIELDS).build().toString()

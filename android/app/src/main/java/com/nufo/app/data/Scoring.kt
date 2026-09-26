@@ -51,6 +51,16 @@ object Scoring {
         return NufoScoreResult((100 + reasons.sumOf { it.delta }).coerceIn(0, 100), reasons)
     }
 
+    /**
+     * A score needs evidence: an official grade, or most of the key nutrients. Without either (a stub entry with a
+     * name and little else) a high score would only mean "nothing was declared", so no score is shown at all.
+     */
+    fun canScore(p: Product): Boolean {
+        val n = p.nutritionPer100g
+        return p.nutriscoreGrade != null || p.novaGroup != null ||
+            listOf(n.calories, n.fat, n.saturatedFat, n.sugar, n.salt ?: n.sodium, n.protein).count { it != null } >= 4
+    }
+
     fun reasons(p: Product) = nufoScore(p.nutritionPer100g, p.nutriscoreGrade, p.novaGroup).reasons
 
     fun insights(p: Product): List<InsightKind> {

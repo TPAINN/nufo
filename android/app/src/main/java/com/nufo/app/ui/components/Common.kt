@@ -199,15 +199,16 @@ fun EcoScoreScale(grade: String?, modifier: Modifier = Modifier) = GradeScale(
     stringResource(R.string.eco_explain), modifier,
 )
 
-/** Animated ring that sweeps to the Nufo Score. */
+/** Animated ring that sweeps to the Nufo Score; a null score (not enough data) is an empty ring with a dash. */
 @Composable
-fun ScoreRing(score: Int, modifier: Modifier = Modifier, diameter: Dp = 96.dp, stroke: Dp = 9.dp) {
+fun ScoreRing(score: Int?, modifier: Modifier = Modifier, diameter: Dp = 96.dp, stroke: Dp = 9.dp) {
     val reduce = LocalReduceMotion.current
-    val sweep = remember { Animatable(if (reduce) score / 100f else 0f) }
-    LaunchedEffect(score) { sweep.animateTo(score / 100f, tween(if (reduce) 0 else Motion.REVEAL, easing = Motion.EaseOut)) }
-    val color = scoreColor(score)
+    val target = (score ?: 0) / 100f
+    val sweep = remember { Animatable(if (reduce) target else 0f) }
+    LaunchedEffect(score) { sweep.animateTo(target, tween(if (reduce) 0 else Motion.REVEAL, easing = Motion.EaseOut)) }
+    val color = scoreColor(score ?: 0)
     val track = LocalNufoColors.current.hairline
-    val cd = stringResource(R.string.nufo_score_cd, score)
+    val cd = if (score != null) stringResource(R.string.nufo_score_cd, score) else stringResource(R.string.score_insufficient)
     Box(modifier.size(diameter).clearAndSetSemantics { contentDescription = cd }, contentAlignment = Alignment.Center) {
         Canvas(Modifier.size(diameter)) {
             val w = stroke.toPx()
@@ -217,8 +218,9 @@ fun ScoreRing(score: Int, modifier: Modifier = Modifier, diameter: Dp = 96.dp, s
             drawArc(color, -90f, 360f * sweep.value, false, topLeft, arcSize, style = Stroke(w, cap = StrokeCap.Round))
         }
         Column(horizontalAlignment = Alignment.CenterHorizontally) {
-            CalligraphNumber(score.toString(), style = MaterialTheme.typography.headlineMedium)
-            Text("/ 100", style = MaterialTheme.typography.labelSmall, color = LocalNufoColors.current.textSecondary)
+            if (score == null) Text("–", style = MaterialTheme.typography.headlineMedium, color = LocalNufoColors.current.textSecondary)
+            else CalligraphNumber(score.toString(), style = MaterialTheme.typography.headlineMedium)
+            if (score != null) Text("/ 100", style = MaterialTheme.typography.labelSmall, color = LocalNufoColors.current.textSecondary)
         }
     }
 }
