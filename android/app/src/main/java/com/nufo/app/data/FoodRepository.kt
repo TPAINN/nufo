@@ -119,6 +119,8 @@ class FoodRepository(private val api: FoodApi, private val dao: HistoryDao, priv
         }
     }
 
+    suspend fun latestUpdate(current: String): Result<AppUpdate?> = runCatching { api.latestUpdate(current) }
+
     suspend fun prices(barcode: String): Result<List<PriceReport>> = runCatching { api.prices(barcode) }
 
     suspend fun save(product: Product) =

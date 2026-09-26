@@ -58,6 +58,7 @@ import androidx.compose.material3.NavigationBarItem
 import androidx.compose.material3.NavigationBarItemDefaults
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
+import androidx.compose.ui.res.stringResource
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
@@ -139,11 +140,30 @@ class MainActivity : ComponentActivity() {
             NufoTheme(s.theme) {
                 CompositionLocalProvider(LocalAppReady provides appReady.value) {
                     NufoNav(vm, startOnWelcome = !s.onboarded)
+                    UpdatePrompt(vm)
                 }
             }
         }
     }
 }
+@Composable
+private fun UpdatePrompt(vm: NufoViewModel) {
+    val update = vm.updatePrompt.collectAsStateWithLifecycle().value ?: return
+    val context = androidx.compose.ui.platform.LocalContext.current
+    androidx.compose.material3.AlertDialog(
+        onDismissRequest = vm::dismissUpdatePrompt,
+        title = { Text(stringResource(R.string.s_update_title)) },
+        text = { Text(stringResource(R.string.s_update_body, update.version)) },
+        confirmButton = {
+            androidx.compose.material3.TextButton({
+                vm.dismissUpdatePrompt()
+                context.startActivity(android.content.Intent(android.content.Intent.ACTION_VIEW, android.net.Uri.parse(update.url)))
+            }) { Text(stringResource(R.string.s_update_download)) }
+        },
+        dismissButton = { androidx.compose.material3.TextButton(vm::dismissUpdatePrompt) { Text(stringResource(R.string.s_update_later)) } },
+    )
+}
+
 @OptIn(ExperimentalSharedTransitionApi::class)
 @Composable
 private fun NufoNav(vm: NufoViewModel, startOnWelcome: Boolean) {
@@ -171,6 +191,8 @@ private fun NufoNav(vm: NufoViewModel, startOnWelcome: Boolean) {
             }
         },
     ) { padding ->
+      // Read live inside each destination: the graph is built once, while the bar may still be hidden.
+      val bottomInset = androidx.compose.runtime.rememberUpdatedState(padding.calculateBottomPadding())
       Box(Modifier.fillMaxSize()) {
       SharedTransitionLayout {
       CompositionLocalProvider(LocalSharedScope provides this) {
@@ -185,7 +207,6 @@ private fun NufoNav(vm: NufoViewModel, startOnWelcome: Boolean) {
             popEnterTransition = { if (isPeerChange()) Motion.peerEnter() else Motion.popEnter() },
             popExitTransition = { if (isPeerChange()) Motion.peerExit() else Motion.popExit() },
         ) {
-            val tabPadding = Modifier.padding(bottom = padding.calculateBottomPadding())
             composable(Routes.WELCOME) {
                 WelcomeScreen(onStart = {
                     vm.finishOnboarding()
@@ -193,7 +214,7 @@ private fun NufoNav(vm: NufoViewModel, startOnWelcome: Boolean) {
                 })
             }
             composable(Routes.HOME) {
-                Box(tabPadding) { CompositionLocalProvider(LocalNavScope provides this@composable) {
+                Box(Modifier.padding(bottom = bottomInset.value)) { CompositionLocalProvider(LocalNavScope provides this@composable) {
                     HomeScreen(
                         vm,
                         onScanBarcode = { nav.navigate(Routes.SCANNER) },
@@ -205,14 +226,14 @@ private fun NufoNav(vm: NufoViewModel, startOnWelcome: Boolean) {
                 } }
             }
             composable(Routes.SEARCH) {
-                Box(tabPadding) { CompositionLocalProvider(LocalNavScope provides this@composable) { SearchScreen(vm, onOpen = { vm.openHit(it); nav.navigate(Routes.RESULT) }) } }
+                Box(Modifier.padding(bottom = bottomInset.value)) { CompositionLocalProvider(LocalNavScope provides this@composable) { SearchScreen(vm, onOpen = { vm.openHit(it); nav.navigate(Routes.RESULT) }, onBarcode = { vm.openBarcode(it); nav.navigate(Routes.RESULT) }) } }
             }
             composable(Routes.HISTORY) {
-                Box(tabPadding) { CompositionLocalProvider(LocalNavScope provides this@composable) {
+                Box(Modifier.padding(bottom = bottomInset.value)) { CompositionLocalProvider(LocalNavScope provides this@composable) {
                     HistoryScreen(vm, onOpen = { vm.openProduct(it); nav.navigate(Routes.RESULT) }, onScan = { nav.navigate(Routes.SCANNER) })
                 } }
             }
-            composable(Routes.SETTINGS) { Box(tabPadding) { SettingsScreen(vm) } }
+            composable(Routes.SETTINGS) { Box(Modifier.padding(bottom = bottomInset.value)) { SettingsScreen(vm) } }
             composable(Routes.SCANNER) {
                 ScannerScreen(
                     onBarcode = { code ->

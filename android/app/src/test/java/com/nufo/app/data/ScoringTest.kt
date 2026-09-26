@@ -58,4 +58,16 @@ class ScoringTest {
         assertEquals(Level.Medium, Scoring.fatLevel(17.5))
         assertEquals(Level.High, Scoring.satFatLevel(5.1))
     }
+
+    @Test fun `stub entries are not scored`() {
+        fun product(n: Nutrition, nutri: String? = null, nova: Int? = null) = Product(
+            barcode = "1", name = "X", brand = null, quantity = null, servingSize = null, servingGrams = null, imageUrl = null,
+            ingredientsText = null, nutritionPer100g = n, nutritionPerServing = null, nutriscoreGrade = nutri, novaGroup = nova,
+            ecoscoreGrade = null, nufoScore = 100, source = OffParser.SOURCE, lastUpdated = 0,
+        )
+        assertTrue(!Scoring.canScore(product(Nutrition(calories = 10.0))))
+        assertTrue(Scoring.canScore(product(Nutrition(), nutri = "c")))
+        assertTrue(Scoring.canScore(product(Nutrition(), nova = 1)))
+        assertTrue(Scoring.canScore(product(Nutrition(calories = 50.0, fat = 1.0, sugar = 2.0, sodium = 0.1))))
+    }
 }

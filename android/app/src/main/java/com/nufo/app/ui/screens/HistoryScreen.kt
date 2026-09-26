@@ -168,8 +168,9 @@ private fun SwipeRow(p: Product, onOpen: () -> Unit, onDelete: () -> Unit, modif
                     )
                 }
                 Spacer(Modifier.width(8.dp))
-                Box(Modifier.size(40.dp).clip(CircleShape).background(scoreColor(p.nufoScore)), contentAlignment = Alignment.Center) {
-                    Text(p.nufoScore.toString(), style = MaterialTheme.typography.titleMedium, color = Color.White)
+                val scored = com.nufo.app.data.Scoring.canScore(p)
+                Box(Modifier.size(40.dp).clip(CircleShape).background(if (scored) scoreColor(p.nufoScore) else LocalNufoColors.current.hairline), contentAlignment = Alignment.Center) {
+                    Text(if (scored) p.nufoScore.toString() else "–", style = MaterialTheme.typography.titleMedium, color = if (scored) Color.White else LocalNufoColors.current.textSecondary)
                 }
             }
         }
