@@ -23,6 +23,8 @@ data class Settings(
     val allergenAlerts: Set<String> = emptySet(),
     /** Look for a new version once a day, on opening. */
     val autoUpdates: Boolean = true,
+    /** Meal photos are identified by the Nufo AI service; off means on-device recognition only. */
+    val smartPhotos: Boolean = true,
 )
 
 private val Context.store by preferencesDataStore("nufo_settings")
@@ -34,6 +36,7 @@ class SettingsStore(private val context: Context) {
     private val diet = stringPreferencesKey("diet")
     private val allergens = stringSetPreferencesKey("allergens")
     private val autoUpdates = booleanPreferencesKey("auto_updates")
+    private val smartPhotos = booleanPreferencesKey("smart_photos")
     private val lastUpdateCheck = longPreferencesKey("last_update_check")
 
     val settings = context.store.data.map { p ->
@@ -44,6 +47,7 @@ class SettingsStore(private val context: Context) {
             diet = p[diet]?.let { runCatching { Diet.valueOf(it) }.getOrNull() } ?: Diet.None,
             allergenAlerts = p[allergens] ?: emptySet(),
             autoUpdates = p[autoUpdates] ?: true,
+            smartPhotos = p[smartPhotos] ?: true,
         )
     }
 
@@ -51,6 +55,7 @@ class SettingsStore(private val context: Context) {
     suspend fun setUnits(v: Units) = context.store.edit { it[units] = v.name }
     suspend fun setTheme(v: ThemeMode) = context.store.edit { it[theme] = v.name }
     suspend fun setDiet(v: Diet) = context.store.edit { it[diet] = v.name }
+    suspend fun setSmartPhotos(v: Boolean) = context.store.edit { it[smartPhotos] = v }
     suspend fun setAutoUpdates(v: Boolean) = context.store.edit { it[autoUpdates] = v }
     suspend fun lastUpdateCheck(): Long = context.store.data.first()[lastUpdateCheck] ?: 0L
     suspend fun markUpdateChecked(at: Long) = context.store.edit { it[lastUpdateCheck] = at }

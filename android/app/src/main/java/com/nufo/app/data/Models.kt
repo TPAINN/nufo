@@ -3,6 +3,9 @@ package com.nufo.app.data
 import kotlinx.serialization.Serializable
 
 @Serializable
+data class RecipePart(val name: String, val grams: Double, val kcalPer100: Double? = null)
+
+@Serializable
 data class Product(
     val barcode: String?,
     val name: String,
@@ -32,6 +35,10 @@ data class Product(
     val completeness: Double? = null,
     /** True when Open Food Facts lists Greece among the countries where it is sold. */
     val soldInGreece: Boolean = false,
+    /** A photographed dish from the bundled table: its serving is a typical plate, not a packaged portion. */
+    val isDish: Boolean = false,
+    /** The dish's typical recipe as grams per 100 g of dish, largest first (bundled dishes only). */
+    val recipe: List<RecipePart> = emptyList(),
 ) {
     /** Stable key for history: barcode when known, otherwise source + name. */
     val key: String get() = barcode ?: "$source:$name"

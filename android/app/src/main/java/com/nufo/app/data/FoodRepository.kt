@@ -29,7 +29,7 @@ data class SearchOutcome(val hits: List<SearchHit>, val offline: Boolean = false
 class FoodRepository(private val api: FoodApi, private val dao: HistoryDao, private val cache: CacheDao, private val dishes: DishTable) {
 
     /** Generic nutrition for a photographed dish, if the bundled table has it. */
-    fun dish(key: String, name: String): Product? = dishes.product(key, name)
+    fun dish(key: String, name: String, lang: String): Product? = dishes.product(key, name, lang)
     private val json = Json { ignoreUnknownKeys = true }
     private fun decode(s: String) = runCatching { json.decodeFromString<Product>(s) }.getOrNull()
     private fun encode(p: Product) = json.encodeToString(Product.serializer(), p)
@@ -118,6 +118,8 @@ class FoodRepository(private val api: FoodApi, private val dao: HistoryDao, priv
             )
         }
     }
+
+    suspend fun analyzeMeal(jpeg: ByteArray): Result<MealAnalysis> = runCatching { api.analyzeMeal(jpeg) }
 
     suspend fun latestUpdate(current: String): Result<AppUpdate?> = runCatching { api.latestUpdate(current) }
 

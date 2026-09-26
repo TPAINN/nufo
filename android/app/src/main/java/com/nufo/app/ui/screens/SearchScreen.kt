@@ -1,5 +1,6 @@
 package com.nufo.app.ui.screens
 
+import com.nufo.app.ui.PhotoCorners
 import com.nufo.app.ui.components.waited
 import com.nufo.app.ui.components.WaitCaption
 import com.nufo.app.ui.components.Wait
@@ -239,7 +240,7 @@ private fun HitRow(h: SearchHit, onClick: () -> Unit, modifier: Modifier) {
     val soldGr = stringResource(R.string.sold_in_greece)
     NufoCard(modifier.fillMaxWidth(), onClick = onClick, onClickLabel = stringResource(R.string.open_product, h.name)) {
         Row(Modifier.padding(12.dp), verticalAlignment = Alignment.CenterVertically) {
-            ProductThumb(h.imageUrl, h.name, Modifier.size(64.dp).clip(RoundedCornerShape(14.dp)), sharedKey = photoKey(h.barcode, h.name))
+            ProductThumb(h.imageUrl, h.name, Modifier.size(64.dp), PhotoCorners(14.dp), sharedKey = photoKey(h.barcode, h.name))
             Spacer(Modifier.width(14.dp))
             Column(Modifier.weight(1f)) {
                 Text(h.name, style = MaterialTheme.typography.titleMedium, maxLines = 2, overflow = TextOverflow.Ellipsis)

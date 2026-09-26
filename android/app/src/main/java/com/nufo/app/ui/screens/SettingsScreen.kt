@@ -149,8 +149,11 @@ fun SettingsScreen(vm: NufoViewModel) {
                 Icon(Icons.AutoMirrored.Outlined.KeyboardArrowRight, null, tint = LocalNufoColors.current.textSecondary)
             }
         }
-        Group(stringResource(R.string.s_updates), 7) { UpdatesSection(vm, s.autoUpdates) { open(it) } }
-        Group(stringResource(R.string.s_data), 8) {
+        Group(stringResource(R.string.s_photos), 7) {
+            ToggleRow(stringResource(R.string.s_smart_photos), stringResource(R.string.s_smart_photos_body), s.smartPhotos, vm::setSmartPhotos)
+        }
+        Group(stringResource(R.string.s_updates), 8) { UpdatesSection(vm, s.autoUpdates) { open(it) } }
+        Group(stringResource(R.string.s_data), 9) {
             Row(
                 Modifier.fillMaxWidth().clickable(role = Role.Button) { confirmClear = true }.padding(vertical = 4.dp),
                 verticalAlignment = Alignment.CenterVertically,
@@ -183,18 +186,20 @@ fun SettingsScreen(vm: NufoViewModel) {
 }
 
 @Composable
+private fun ToggleRow(title: String, body: String, checked: Boolean, onChange: (Boolean) -> Unit) {
+    Row(Modifier.fillMaxWidth().toggleable(checked, role = Role.Switch, onValueChange = onChange), verticalAlignment = Alignment.CenterVertically) {
+        Column(Modifier.weight(1f).padding(end = 12.dp)) {
+            Text(title, style = MaterialTheme.typography.bodyLarge)
+            Text(body, style = MaterialTheme.typography.labelMedium, color = LocalNufoColors.current.textSecondary)
+        }
+        Switch(checked, onCheckedChange = null)
+    }
+}
+
+@Composable
 private fun UpdatesSection(vm: NufoViewModel, auto: Boolean, onDownload: (String) -> Unit) {
     val state by vm.update.collectAsStateWithLifecycle()
-    Row(
-        Modifier.fillMaxWidth().toggleable(auto, role = Role.Switch, onValueChange = vm::setAutoUpdates),
-        verticalAlignment = Alignment.CenterVertically,
-    ) {
-        Column(Modifier.weight(1f)) {
-            Text(stringResource(R.string.s_auto_updates), style = MaterialTheme.typography.bodyLarge)
-            Text(stringResource(R.string.s_auto_updates_body), style = MaterialTheme.typography.labelMedium, color = LocalNufoColors.current.textSecondary)
-        }
-        Switch(auto, onCheckedChange = null)
-    }
+    ToggleRow(stringResource(R.string.s_auto_updates), stringResource(R.string.s_auto_updates_body), auto, vm::setAutoUpdates)
     // Manual checking is revealed only when the automatic one is off; an available update always shows.
     AnimatedVisibility(
         visible = !auto || state is UpdateState.Available,

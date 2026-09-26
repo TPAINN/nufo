@@ -14,3 +14,4 @@ ios/DerivedData/
 *.keystore
 nufo-release.properties
 ios/xcodebuild.log
+__pycache__/

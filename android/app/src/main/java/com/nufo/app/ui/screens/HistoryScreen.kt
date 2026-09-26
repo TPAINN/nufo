@@ -1,5 +1,6 @@
 package com.nufo.app.ui.screens
 
+import com.nufo.app.ui.PhotoCorners
 import androidx.compose.animation.animateColorAsState
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
@@ -146,7 +147,7 @@ private fun SwipeRow(p: Product, onOpen: () -> Unit, onDelete: () -> Unit, modif
     ) {
         NufoCard(Modifier.fillMaxWidth(), onClick = onOpen, onClickLabel = stringResource(R.string.open_product, p.displayName())) {
             Row(Modifier.padding(12.dp), verticalAlignment = Alignment.CenterVertically) {
-                ProductThumb(p, Modifier.size(64.dp).clip(RoundedCornerShape(14.dp)))
+                ProductThumb(p, Modifier.size(64.dp), PhotoCorners(14.dp))
                 Spacer(Modifier.width(14.dp))
                 Column(Modifier.weight(1f)) {
                     Text(p.displayName(), style = MaterialTheme.typography.titleMedium, maxLines = 1, overflow = TextOverflow.Ellipsis)
