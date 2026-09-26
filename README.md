@@ -1,25 +1,88 @@
-# Nufo
+<p align="center">
+  <img src="docs/readme/banner.png" alt="Nufo: know what you eat. Scan a barcode or photograph your plate." width="100%">
+</p>
 
-**Easy • Quick • Accurate** — a no-account nutrition scanner for Android (Kotlin + Jetpack Compose) and iOS (SwiftUI).
+<p align="center">
+  <a href="https://nufo.vercel.app"><img alt="Download for Android" src="https://img.shields.io/badge/Download-Android_APK-2E7D32?style=for-the-badge&logo=android&logoColor=white"></a>
+  <a href="https://github.com/TPAINN/nufo/releases/latest"><img alt="Latest release" src="https://img.shields.io/github/v/release/TPAINN/nufo?style=for-the-badge&color=1B5E20&label=release"></a>
+</p>
 
-Scan a barcode, photograph a meal or its packaging, or search by name. Nufo shows real nutrition facts,
-Nutri-Score, NOVA, Eco-Score and a transparent Nufo Score, with the source and last-updated date on every
-result. Missing data is shown as "Not available", never made up. History and preferences stay on the device.
+<p align="center">
+  <a href="https://github.com/TPAINN/nufo/actions/workflows/android.yml"><img alt="Android CI" src="https://github.com/TPAINN/nufo/actions/workflows/android.yml/badge.svg"></a>
+  <a href="https://github.com/TPAINN/nufo/actions/workflows/ios.yml"><img alt="iOS CI" src="https://github.com/TPAINN/nufo/actions/workflows/ios.yml/badge.svg"></a>
+  <img alt="Kotlin and Jetpack Compose" src="https://img.shields.io/badge/Kotlin-Jetpack_Compose-7F52FF?logo=kotlin&logoColor=white">
+  <img alt="SwiftUI" src="https://img.shields.io/badge/iOS-SwiftUI-F05138?logo=swift&logoColor=white">
+  <img alt="No account" src="https://img.shields.io/badge/account-not_needed-2E7D32">
+  <img alt="Free" src="https://img.shields.io/badge/price-free-2E7D32">
+</p>
 
-| Καλωσόρισμα | Αρχική | Αναζήτηση «Φέτα» | Αποτέλεσμα | Διατροφική δήλωση |
-|---|---|---|---|---|
-| ![](docs/screenshots/el-01-welcome.png) | ![](docs/screenshots/el-02-home.png) | ![](docs/screenshots/el-03-search-feta.png) | ![](docs/screenshots/el-04-result.png) | ![](docs/screenshots/el-05-declaration.png) |
+<h3 align="center">Scan a barcode or photograph your plate.<br>Nufo tells you what is in it: in Greek, in seconds, for free.</h3>
+<p align="center"><i>Σκανάρετε το barcode ή φωτογραφίστε το πιάτο σας. Το Nufo σας λέει τι περιέχει, στα ελληνικά, σε δευτερόλεπτα, δωρεάν.</i></p>
 
-*(Android emulator, Greek UI, live data. English screenshots: `docs/screenshots/0*.png`.)*
+<br>
 
-| Offline home | Offline search | Offline, not saved | Prices | Long Greek name |
-|---|---|---|---|---|
-| ![](docs/screenshots/el-06-offline-home.png) | ![](docs/screenshots/el-07-offline-search.png) | ![](docs/screenshots/el-08-offline-error.png) | ![](docs/screenshots/el-09-prices.png) | ![](docs/screenshots/el-10-greek-product.png) |
+## Photograph your plate. See every food on it.
 
-Frame-by-frame recordings: [opening animation](docs/screenshots/splash-sequence.png), [welcome](docs/screenshots/welcome-sequence.png),
-[search → product transition](docs/screenshots/transition-sequence.png), [dark mode](docs/screenshots/el-dark.png).
+<table>
+<tr>
+<td width="340" valign="top"><img src="docs/readme/meal-demo.gif" alt="Nufo finds roast chicken, sweet potato and kale in a photo, with grams and calories, then opens the full nutrition" width="320"></td>
+<td valign="top">
 
-## Built for Greece
+**Chicken with sweet potato is not muesli.** Point Nufo at a plate and it lists each food separately, with how it is cooked and how many grams are there:
+
+- **Roast chicken leg** · 200 g · 430 kcal
+- **Roasted sweet potato** · 150 g · 135 kcal
+- **Sautéed kale** · 50 g · 14 kcal
+
+Wrong amount? One tap on **+** or **−** and every number follows. Then open the full picture: calories, macros, the EU nutrition declaration, traffic-light dots and the Nufo Score for the whole meal.
+
+Nutrition per 100 g comes from **USDA FoodData Central** whenever it agrees with the model's reading, and is labelled as an estimate when it does not. Tested on **107 real meal photos**: grilled chicken, salmon and vegetables, oatmeal versus muesli, poke bowls, horiatiki, gemista, gyros.
+
+</td>
+</tr>
+</table>
+
+## Why people keep it on their phone
+
+| | |
+|---|---|
+| **One honest score** | A 0 to 100 Nufo Score with every rule visible: Nutri-Score, NOVA processing, sugar, salt, saturated fat, protein, fibre. Tap "How is this calculated?" and see exactly why. |
+| **The official scales** | Nutri-Score A to E, NOVA 1 to 4 and Eco-Score, drawn like the badges on the pack, with the product's grade enlarged. |
+| **Built for Greece** | Greek UI, Greek search with or without accents ("γιαουρτι" works), and the ~6,200 products sold in Greece shown first with a GR mark. |
+| **Real data only** | Every result shows its source, last update and completeness. Missing means missing: Nufo never invents a number. |
+| **Prices from real receipts** | Recent shelf prices from Open Prices, Greek stores first. |
+| **Works in the basement** | Everything you have scanned opens offline, with its photo. Search falls back to your saved products. |
+| **No account, ever** | No sign-up, no email, no ads, no tracking. Your history stays on your phone. |
+
+<p align="center">
+  <img src="docs/readme/screens.png" alt="Five Nufo screens: home, meal photo analysis, product score, Greek search, nutrition declaration" width="100%">
+</p>
+
+## How it works
+
+1. **Open it and scan.** No sign-up. The camera reads the barcode on the phone itself.
+2. **Or photograph your plate.** Nufo finds each food and its grams; you correct anything in one tap.
+3. **Read one screen.** Score, grades, allergens that matter to you, and the full label, in Greek.
+
+## Get Nufo
+
+- **Android 8+**: download from **[nufo.vercel.app](https://nufo.vercel.app)** or the [latest release](https://github.com/TPAINN/nufo/releases/latest) (`nufo-1.0.2.apk`; `-32bit` for older phones). It updates in place and keeps your history, and it tells you once a day when a new version is out.
+- **iPhone**: the SwiftUI app builds and passes its tests in CI; TestFlight follows once the Apple Developer account is set up.
+
+## Data sources
+
+[Open Food Facts](https://world.openfoodfacts.org) (ODbL) for packaged products · [USDA FoodData Central](https://fdc.nal.usda.gov) (public domain) for generic foods, dishes and meal nutrition · [Open Prices](https://prices.openfoodfacts.org) for shelf prices · Google Gemini, through the Nufo analysis service, to recognise meal photos.
+
+Nufo provides nutrition information, not medical advice.
+
+---
+
+## For developers
+
+The full technical write-up: how Greek search works, the scoring rules, offline behaviour, motion, and how to build, test and release both apps. Click a section to open it.
+
+<details>
+<summary><b>Built for Greece</b></summary>
 
 - **Greek and English UI**, switchable on the first screen and in Settings (Android 13+ per-app language;
   iOS via the system Settings app). Polite plural throughout, Greek number and date formats ("16,5 g").
@@ -34,7 +97,10 @@ Frame-by-frame recordings: [opening animation](docs/screenshots/splash-sequence.
 - **Popular in Greece** quick searches on Home (φέτα, γιαούρτι, ελαιόλαδο, σπανακόπιτα…).
 - Missing Greek product? The not-found screen links straight to adding it on Open Food Facts.
 
-## Designed to be trusted
+</details>
+
+<details>
+<summary><b>Designed to be trusted</b></summary>
 
 - **Provenance on every result:** source, last update, Open Food Facts' own data-completeness percentage,
   and "Sold in Greece".
@@ -46,7 +112,11 @@ Frame-by-frame recordings: [opening animation](docs/screenshots/splash-sequence.
 - **Sanity checks:** energy above 900 kcal per 100 g is physically impossible, so it's treated as a kJ value
   typed in the wrong field (or hidden) instead of being shown.
 - Inter typeface (Latin + Greek), hairline-edged cards, text colours checked for contrast.
-## Repository layout
+
+</details>
+
+<details>
+<summary><b>Repository layout</b></summary>
 
 ```
 android/            Kotlin · Jetpack Compose · Material 3 · Room · DataStore · CameraX · ML Kit · OkHttp · Coil
@@ -56,20 +126,27 @@ branding/           App icon (SVG + 1024 px PNG) and the Tegaki "Nufo" handwriti
 .env.example        Optional API keys (none are required)
 ```
 
-## Data sources
+</details>
+
+<details>
+<summary><b>Data sources</b></summary>
 
 | Source | Used for | Key |
 |---|---|---|
 | Open Food Facts (product API + Search-a-licious) | Barcodes, packaged products, Nutri-Score, NOVA, Eco-Score, ingredients, allergens | none |
 | USDA FoodData Central | Generic and branded foods, barcode fallback | free; falls back to `DEMO_KEY` |
 | Open Prices (by Open Food Facts) | Latest shopper-reported shelf prices, Greek stores first | none |
+| Nufo meal analysis (`nufo.vercel.app/api/analyze`, Gemini) | Every food in a meal photo, its grams, nutrition cross-checked with USDA FNDDS | server-side only |
 | UPCitemdb (free trial endpoint) | Last-resort identity (name, photo) for barcodes no food database has | none, ~100 lookups/day per IP |
 
 The prompt also listed Edamam, Nutritionix, CalorieNinjas, API-Ninjas, Spoonacular and TheMealDB. Each needs
 a secret key, which would have to sit behind a proxy for a no-account app. They are not wired in: Open Food
 Facts plus USDA already cover barcodes, packaged foods and generic foods with no keys at all.
 
-## Offline, states and performance
+</details>
+
+<details>
+<summary><b>Offline, states and performance</b></summary>
 
 - **Offline:** every product looked up is cached on the device (Room table on Android, files in Application
   Support on iOS) and product photos stay in the image cache. Without a connection, saved products open with
@@ -89,13 +166,16 @@ Facts plus USDA already cover barcodes, packaged foods and generic foods with no
 - **Photos:** thumbnails use Open Food Facts' 400 px rendition (sharp on 3× screens); the product page layers
   the full-resolution photo on top once it arrives, decoded at display size.
 
-## Android
+</details>
+
+<details>
+<summary><b>Android</b></summary>
 
 Requirements: JDK 17+, Android SDK 36, an emulator or device.
 
 ```bash
 cd android
-./gradlew testDebugUnitTest            # 29 unit tests: scoring, parsers, prices, Greek search, image sizes
+./gradlew testDebugUnitTest            # 38 unit tests: scoring, parsers, meals, dishes, updates, Greek search
 ./gradlew assembleDebug
 emulator -list-avds
 emulator -avd <your_avd> -dns-server 8.8.8.8
@@ -117,8 +197,8 @@ ANDROID_SERIAL=emulator-5554 ./gradlew installBenchmark            # release cod
 
 ### Release (Android)
 
-- Version 1.0.0 (versionCode 1). Download page: https://nufo.vercel.app. Builds are attached to the
-  GitHub release `v1.0.0`.
+- Version 1.0.2 (versionCode 3). Download page: https://nufo.vercel.app. Builds are attached to the
+  GitHub release `v1.0.2`. The app checks the latest release once a day (toggle in Settings).
 - Signing key: `~/.android/nufo-release.jks`, described by `~/.android/nufo-release.properties`
   (storeFile, storePassword, keyAlias, keyPassword), both outside the repo. Another location: set
   `NUFO_SIGNING` to the properties file. **Back both up**: without the key, no updates can be published.
@@ -128,7 +208,10 @@ ANDROID_SERIAL=emulator-5554 ./gradlew installBenchmark            # release cod
 - CI (`.github/workflows/android.yml`) runs unit tests, lint and an unsigned release build on every push
   to `android/`.
 
-## iOS
+</details>
+
+<details>
+<summary><b>iOS</b></summary>
 
 Requirements: macOS with Xcode 15+ and [XcodeGen](https://github.com/yonaskolb/XcodeGen).
 
@@ -149,9 +232,12 @@ xcrun simctl launch booted com.nufo.app
   hand from the Actions tab). Last run: build and tests green.
 - **Distribution needs an Apple Developer account** (enrolment and signing are the owner's). With it, CI can
   sign and upload to TestFlight, and the landing page's App Store badge becomes a real link.
-- Not yet ported from Android: on-device dish recognition (FoodClassifier) and the bundled dish table.
+- Not yet ported from Android: AI meal recognition, on-device dish recognition (FoodClassifier) and the bundled dish table.
 
-## Motion and branding
+</details>
+
+<details>
+<summary><b>Motion and branding</b></summary>
 
 - **One motion system** (`Motion.kt`, `Motion` in `Theme.swift`): three durations (150 / 250 / 400 ms), one
   strong ease-out and one ease-in-out curve, one spring for movement, 45 ms stagger. Forward navigation slides
@@ -175,8 +261,14 @@ xcrun simctl launch booted com.nufo.app
   and list items stagger in. Decorative motion is off when the system's reduce-motion setting is on.
 - Icon: scanner corners around a leaf on Nufo green (`branding/nufo-icon.svg`); Android uses an adaptive vector icon.
 
-## Privacy
+</details>
 
-No sign-up, no login, no analytics. Only a barcode or search text is sent to the food databases. Photos
-are analyzed on-device (ML Kit / Vision). History is excluded from Android cloud backup.
+<details>
+<summary><b>Privacy</b></summary>
+
+No sign-up, no login, no analytics. Only a barcode or search text is sent to the food databases. Meal
+photos go to the Nufo analysis service (below) unless Smart analysis is off in Settings; barcodes and labels
+are read on-device (ML Kit / Vision). History is excluded from Android cloud backup.
 *Nufo provides nutrition information, not medical advice.*
+
+</details>
