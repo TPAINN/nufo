@@ -20,9 +20,9 @@ class FoodRecognitionBenchmark {
     fun recognizeDishPhotos(): Unit = runBlocking {
         val instrumentation = InstrumentationRegistry.getInstrumentation()
         val assets = instrumentation.context.assets
-        val files = assets.list("food").orEmpty().filter { it.endsWith(".jpg") }.sorted()
+        val files = assets.list(DIR).orEmpty().filter { it.endsWith(".jpg") }.sorted()
         for (file in files) {
-            val bitmap = assets.open("food/$file").use(BitmapFactory::decodeStream)
+            val bitmap = assets.open("$DIR/$file").use(BitmapFactory::decodeStream)
             val started = System.nanoTime()
             val a = PhotoAnalyzer.analyze(instrumentation.targetContext, bitmap, "en")
             val ms = (System.nanoTime() - started) / 1_000_000
@@ -32,5 +32,5 @@ class FoodRecognitionBenchmark {
         Log.i(TAG, "DONE ${files.size}")
     }
 
-    private companion object { const val TAG = "NUFO_BENCH" }
+    private companion object { const val TAG = "NUFO_BENCH"; val DIR = InstrumentationRegistry.getArguments().getString("dir") ?: "food" }
 }

@@ -1,5 +1,20 @@
 package com.nufo.app.ui.screens
 
+import kotlin.math.roundToInt
+import com.nufo.app.data.UsdaParser
+import com.nufo.app.data.MealParser
+import androidx.compose.animation.scaleIn
+import kotlinx.coroutines.launch
+import androidx.compose.ui.hapticfeedback.HapticFeedbackType
+import androidx.compose.ui.platform.LocalHapticFeedback
+import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.material3.SnackbarResult
+import androidx.compose.material3.SnackbarDuration
+import androidx.compose.material3.SnackbarHostState
+import androidx.compose.material3.SnackbarHost
+import com.nufo.app.ui.PhotoCorners
+import androidx.compose.foundation.layout.fillMaxHeight
+import com.nufo.app.data.RecipePart
 import androidx.compose.animation.core.animateFloatAsState
 import com.nufo.app.ui.components.waited
 import com.nufo.app.ui.components.WaitCaption
@@ -157,14 +172,35 @@ fun ResultScreen(vm: NufoViewModel, onBack: () -> Unit, onSearch: (String) -> Un
     val settings by vm.settings.collectAsStateWithLifecycle()
     val context = LocalContext.current
     val shareTitle = stringResource(R.string.share)
+    val snackbar = remember { SnackbarHostState() }
+    val scope = rememberCoroutineScope()
+    val haptics = LocalHapticFeedback.current
+    val savedMsg = stringResource(R.string.saved_to_history)
+    val removedFmt = stringResource(R.string.history_removed)
+    val undo = stringResource(R.string.undo)
+    Box(Modifier.fillMaxSize()) {
     Column(Modifier.fillMaxSize().background(MaterialTheme.colorScheme.background).statusBarsPadding()) {
         Row(Modifier.fillMaxWidth().padding(horizontal = 8.dp, vertical = 4.dp), verticalAlignment = Alignment.CenterVertically) {
             IconButton(onBack) { Icon(Icons.AutoMirrored.Outlined.ArrowBack, stringResource(R.string.back)) }
             Spacer(Modifier.weight(1f))
             (state as? ResultState.Loaded)?.product?.let { p ->
                 val isSaved = saved.any { it.key == p.key }
-                IconButton({ vm.toggleSaved(p) }) {
-                    AnimatedContent(isSaved, label = "saved") { s ->
+                val name = p.displayName()
+                IconButton({
+                    haptics.performHapticFeedback(HapticFeedbackType.LongPress)
+                    vm.toggleSaved(p)
+                    // Every change is confirmed, and removing can be undone: a silent toggle reads as broken.
+                    scope.launch {
+                        snackbar.currentSnackbarData?.dismiss()
+                        if (isSaved) {
+                            if (snackbar.showSnackbar(removedFmt.replace("%1\$s", name), undo, duration = SnackbarDuration.Short) == SnackbarResult.ActionPerformed) vm.restore(p)
+                        } else snackbar.showSnackbar(savedMsg, duration = SnackbarDuration.Short)
+                    }
+                }) {
+                    AnimatedContent(
+                        isSaved, label = "saved",
+                        transitionSpec = { (scaleIn(nufoSpring(), initialScale = 0.6f) + fadeIn(Motion.fadeInSpec())) togetherWith fadeOut(Motion.fadeOutSpec()) },
+                    ) { s ->
                         Icon(
                             if (s) Icons.Filled.Bookmark else Icons.Outlined.BookmarkBorder,
                             stringResource(if (s) R.string.remove_history else R.string.save_history),
@@ -200,6 +236,8 @@ fun ResultScreen(vm: NufoViewModel, onBack: () -> Unit, onSearch: (String) -> Un
             }
         }
     }
+    SnackbarHost(snackbar, Modifier.align(Alignment.BottomCenter).navigationBarsPadding().padding(16.dp))
+    }
 }
 
 @Composable
@@ -225,7 +263,7 @@ private fun NotFound(barcode: String?, identified: Identified?, onSearch: (Strin
         },
     ) {
         if (identified != null) {
-            ProductThumb(identified.imageUrl, identified.name, Modifier.size(120.dp).clip(RoundedCornerShape(20.dp)))
+            ProductThumb(identified.imageUrl, identified.name, Modifier.size(120.dp), PhotoCorners(20.dp))
             Spacer(Modifier.height(16.dp))
             Button({ onSearch(identified.name) }, shape = RoundedCornerShape(16.dp)) { Text(stringResource(R.string.identified_search, identified.name)) }
         } else Button({ onSearch("") }, shape = RoundedCornerShape(16.dp)) { Text(stringResource(R.string.not_found_search)) }
@@ -289,7 +327,7 @@ private fun LoadingSkeleton(preview: SearchHit?, step: LookupStep?) {
         if (preview?.imageUrl != null) {
             // The row's photo lands in place at once, so the open transition reads as one continuous motion.
             NufoCard(Modifier.fillMaxWidth(), corner = 28.dp) {
-                ProductThumb(preview.imageUrl, preview.name, Modifier.fillMaxWidth().height(260.dp), hero = true,
+                ProductThumb(preview.imageUrl, preview.name, Modifier.fillMaxWidth().height(260.dp), PhotoCorners(28.dp), hero = true,
                     sharedKey = photoKey(preview.barcode, preview.name))
             }
         } else Box(Modifier.fillMaxWidth().height(220.dp).clip(RoundedCornerShape(28.dp)).background(c))
@@ -321,7 +359,8 @@ private fun weightLabel(grams: Double, units: Units) =
 @Composable
 private fun ProductDetail(p: Product, cachedAt: Long?, vm: NufoViewModel, units: Units, diet: Diet, alerts: Set<String>) {
     val lang = currentDataLang()
-    var portion by rememberSaveable(p.key) { mutableStateOf(Portion.Per100) }
+    // A photographed plate opens at a typical serving; a packaged product at the label's 100 g.
+    var portion by rememberSaveable(p.key) { mutableStateOf(if (p.isDish && p.servingGrams != null) Portion.Serving else Portion.Per100) }
     var customGrams by rememberSaveable(p.key) { mutableFloatStateOf(150f) }
     var tab by rememberSaveable(p.key) { mutableStateOf(Tab.Nutrition) }
     var method by remember { mutableStateOf(false) }
@@ -345,7 +384,7 @@ private fun ProductDetail(p: Product, cachedAt: Long?, vm: NufoViewModel, units:
     Column(Modifier.verticalScroll(rememberScrollState()).navigationBarsPadding().padding(bottom = 28.dp)) {
         NufoCard(Modifier.padding(horizontal = 20.dp).fillMaxWidth().enterStagger(0), corner = 28.dp) {
             // Without a photo a tall empty box looks unfinished; keep the placeholder compact.
-            ProductThumb(p, Modifier.fillMaxWidth().height(if (p.imageUrl == null) 120.dp else 260.dp), hero = true)
+            ProductThumb(p, Modifier.fillMaxWidth().height(if (p.imageUrl == null) 120.dp else 260.dp), PhotoCorners(28.dp), hero = true)
         }
         Spacer(Modifier.height(18.dp))
         Column(Modifier.padding(horizontal = 20.dp).enterStagger(1)) {
@@ -383,7 +422,7 @@ private fun ProductDetail(p: Product, cachedAt: Long?, vm: NufoViewModel, units:
             )
             p.completeness?.let { TrustChip(Icons.Outlined.DataUsage, stringResource(R.string.trust_completeness, (it * 100).toInt())) }
             if (p.soldInGreece) TrustChip(Icons.Outlined.Place, stringResource(R.string.sold_in_greece))
-            if (p.source != OffParser.SOURCE && lang == "el") TrustChip(Icons.Outlined.Info, stringResource(R.string.usda_english), tint = GradeC)
+            if (p.source == UsdaParser.SOURCE && !p.isDish && lang == "el") TrustChip(Icons.Outlined.Info, stringResource(R.string.usda_english), tint = GradeC)
         }
 
         val allergenHits = p.matchingAllergens(alerts)
@@ -457,6 +496,11 @@ private fun ProductDetail(p: Product, cachedAt: Long?, vm: NufoViewModel, units:
             }
         }
 
+        if (p.recipe.isNotEmpty()) {
+            Spacer(Modifier.height(16.dp))
+            RecipeCard(p.recipe, grams ?: 100.0, portionText, units, fromPhoto = p.source == MealParser.SOURCE, Modifier.padding(horizontal = 20.dp))
+        }
+
         if (p.source == OffParser.SOURCE && p.barcode != null) {
             Spacer(Modifier.height(16.dp))
             PricesCard(vm, Modifier.padding(horizontal = 20.dp))
@@ -493,7 +537,7 @@ private fun ProductDetail(p: Product, cachedAt: Long?, vm: NufoViewModel, units:
             else stringResource(R.string.not_available)
             Text(stringResource(R.string.footer_source, p.source, updated), style = MaterialTheme.typography.labelMedium, color = LocalNufoColors.current.textSecondary)
             Text(
-                stringResource(if (p.source == OffParser.SOURCE) R.string.footer_odbl else R.string.footer_usda),
+                stringResource(when (p.source) { OffParser.SOURCE -> R.string.footer_odbl; MealParser.SOURCE -> R.string.footer_ai; else -> R.string.footer_usda }),
                 style = MaterialTheme.typography.labelMedium, color = LocalNufoColors.current.textSecondary,
             )
             Spacer(Modifier.height(6.dp))
@@ -750,6 +794,35 @@ private fun VitaminsTab(p: Product, n: Nutrition, lang: String) = InfoCard {
 }
 
 @OptIn(ExperimentalLayoutApi::class)
+/** What a typical plate of this dish is made of, in grams for the chosen portion, each with a bar to scale. */
+@Composable
+private fun RecipeCard(recipe: List<RecipePart>, portionGrams: Double, portionText: String, units: Units, fromPhoto: Boolean, modifier: Modifier) {
+    val largest = recipe.maxOf { it.grams }
+    NufoCard(modifier.fillMaxWidth()) {
+        Column(Modifier.padding(20.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
+            Column {
+                Text(stringResource(R.string.recipe_title), style = MaterialTheme.typography.titleMedium)
+                Text(stringResource(if (fromPhoto) R.string.recipe_subtitle_photo else R.string.recipe_subtitle, portionText), style = MaterialTheme.typography.labelMedium, color = LocalNufoColors.current.textSecondary)
+            }
+            recipe.forEachIndexed { i, part ->
+                val fraction by animateFloatAsState((part.grams / largest).toFloat(), nufoSpring(), label = "recipe-bar")
+                Column(Modifier.enterStagger(i).semantics(mergeDescendants = true) {}) {
+                    Row(verticalAlignment = Alignment.Bottom) {
+                        Text(part.name, style = MaterialTheme.typography.bodyLarge, modifier = Modifier.weight(1f))
+                        val grams = part.grams * portionGrams / 100
+                        val kcal = part.kcalPer100?.let { " · " + stringResource(R.string.meal_item_kcal, (it * grams / 100).roundToInt()) }.orEmpty()
+                        Text(weightLabel(grams, units) + kcal, style = MaterialTheme.typography.bodyMedium, color = LocalNufoColors.current.textSecondary)
+                    }
+                    Spacer(Modifier.height(6.dp))
+                    Box(Modifier.fillMaxWidth().height(6.dp).clip(RoundedCornerShape(50)).background(LocalNufoColors.current.hairline)) {
+                        Box(Modifier.fillMaxWidth(fraction).fillMaxHeight().clip(RoundedCornerShape(50)).background(MaterialTheme.colorScheme.primary))
+                    }
+                }
+            }
+        }
+    }
+}
+
 @Composable
 private fun IngredientsTab(p: Product, lang: String) = InfoCard {
     Text(stringResource(R.string.ingredients), style = MaterialTheme.typography.titleMedium)

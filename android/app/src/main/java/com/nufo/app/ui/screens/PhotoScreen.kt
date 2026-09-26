@@ -1,5 +1,20 @@
 package com.nufo.app.ui.screens
 
+import com.nufo.app.ui.components.Wait
+import com.nufo.app.ui.components.waited
+import com.nufo.app.ui.components.enterStagger
+import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.material3.TextButton
+import androidx.compose.material.icons.outlined.Close
+import androidx.compose.material.icons.outlined.Remove
+import androidx.compose.material.icons.outlined.Add
+import androidx.compose.runtime.key
+import androidx.compose.animation.animateContentSize
+import kotlin.math.roundToInt
+import kotlinx.coroutines.coroutineScope
+import kotlinx.coroutines.async
+import com.nufo.app.data.MealItem
+import com.nufo.app.data.MealAnalysis
 import com.nufo.app.ui.theme.Motion
 
 import android.graphics.Bitmap
@@ -87,9 +102,14 @@ import kotlinx.coroutines.withContext
 private sealed interface PhotoState {
     data object Empty : PhotoState
     data object Analyzing : PhotoState
-    data class Done(val analysis: PhotoAnalysis) : PhotoState
+    /** The meal is with the AI service; on-device recognition has already ruled out a barcode. */
+    data object Identifying : PhotoState
+    data class Meal(val meal: MealAnalysis, val fallback: PhotoAnalysis) : PhotoState
+    data class Done(val analysis: PhotoAnalysis, val note: String? = null) : PhotoState
     data class Failed(val message: String) : PhotoState
 }
+
+private val NOTHING_FOUND = PhotoAnalysis(null, emptyList(), emptyList(), emptyList())
 
 /** Decodes a picked photo at most ~1600 px on its long side: analysis needs no more, and huge photos cost memory. */
 private fun decode(context: android.content.Context, uri: Uri): Bitmap =
@@ -117,6 +137,9 @@ fun PhotoScreen(
     onDish: (key: String, name: String, photo: Bitmap?) -> Unit,
     onConfirm: (String) -> Unit,
     onClose: () -> Unit,
+    smart: Boolean,
+    analyzeMeal: suspend (Bitmap) -> Result<MealAnalysis>,
+    onMeal: (MealAnalysis, Bitmap?) -> Unit,
 ) {
     val context = LocalContext.current
     var bitmap by remember { mutableStateOf<Bitmap?>(null) }
@@ -124,6 +147,8 @@ fun PhotoScreen(
     var launched by rememberSaveable { mutableStateOf(false) }
     val openFailed = stringResource(R.string.photo_open_failed)
     val analysisFailed = stringResource(R.string.photo_failed)
+    val aiUnavailable = stringResource(R.string.photo_ai_unavailable)
+    val noFood = stringResource(R.string.photo_no_food)
     val lang = currentDataLang()
 
     val camera = rememberLauncherForActivityResult(ActivityResultContracts.TakePicturePreview()) { bmp -> if (bmp != null) bitmap = bmp }
@@ -137,9 +162,18 @@ fun PhotoScreen(
     LaunchedEffect(bitmap) {
         val bmp = bitmap ?: return@LaunchedEffect
         state = PhotoState.Analyzing
-        state = runCatching { withContext(Dispatchers.Default) { PhotoAnalyzer.analyze(context, bmp, lang) } }
-            .fold({ PhotoState.Done(it) }, { PhotoState.Failed(analysisFailed) })
-        (state as? PhotoState.Done)?.analysis?.barcode?.let(onBarcode)
+        coroutineScope {
+            // The AI service starts at once, alongside on-device analysis, which only has to rule out a barcode.
+            val ai = if (smart) async { analyzeMeal(bmp) } else null
+            val local = runCatching { withContext(Dispatchers.Default) { PhotoAnalyzer.analyze(context, bmp, lang) } }.getOrNull()
+            local?.barcode?.let { ai?.cancel(); onBarcode(it); return@coroutineScope }
+            if (ai == null) { state = local?.let { PhotoState.Done(it) } ?: PhotoState.Failed(analysisFailed); return@coroutineScope }
+            state = PhotoState.Identifying
+            state = ai.await().fold(
+                { meal -> if (meal.items.isNotEmpty()) PhotoState.Meal(meal, local ?: NOTHING_FOUND) else PhotoState.Done(local ?: NOTHING_FOUND, noFood) },
+                { local?.let { PhotoState.Done(it, aiUnavailable) } ?: PhotoState.Failed(analysisFailed) },
+            )
+        }
     }
 
     Column(
@@ -182,14 +216,26 @@ fun PhotoScreen(
         ) { s ->
             when (s) {
                 PhotoState.Empty -> Text(stringResource(R.string.photo_prompt), color = LocalNufoColors.current.textSecondary)
-                PhotoState.Analyzing -> Row(verticalAlignment = Alignment.CenterVertically) {
+                PhotoState.Analyzing, PhotoState.Identifying -> Row(verticalAlignment = Alignment.CenterVertically) {
                     CircularProgressIndicator(Modifier.size(22.dp), strokeWidth = 2.5.dp)
                     Spacer(Modifier.width(12.dp))
-                    Text(stringResource(R.string.photo_analyzing), style = MaterialTheme.typography.bodyLarge)
+                    val caption = when {
+                        !smart -> R.string.photo_analyzing
+                        waited(Wait.SLOW_AFTER_MS) -> R.string.photo_ai_slow
+                        else -> R.string.photo_ai_analyzing
+                    }
+                    AnimatedContent(caption, transitionSpec = { Motion.crossfade() }, label = "photoCaption") {
+                        Text(stringResource(it), style = MaterialTheme.typography.bodyLarge)
+                    }
                 }
+                is PhotoState.Meal -> MealEditor(s.meal, lang, onOpen = { onMeal(it, bitmap) }, onWrong = { state = PhotoState.Done(s.fallback) })
                 is PhotoState.Failed -> ConfirmFood(emptyList(), s.message, null, onConfirm)
-                is PhotoState.Done -> {
+                is PhotoState.Done -> Column {
                     val a = s.analysis
+                    s.note?.let {
+                        Text(it, style = MaterialTheme.typography.bodyMedium, color = LocalNufoColors.current.textSecondary)
+                        Spacer(Modifier.height(12.dp))
+                    }
                     val sure = a.dishes.firstOrNull()?.takeIf { it.confidence >= DishConfidence.CONFIDENT }
                     val dishes = a.dishes.filter { it.confidence >= DishConfidence.PLAUSIBLE }.take(3).map { it.label }
                     // Dish guesses first, then words read from packaging, then broad categories.
@@ -243,3 +289,58 @@ private fun ConfirmFood(candidates: List<String>, hint: String, preselected: Str
         }
     }
 }
+
+/** What the AI found on the plate, each with its grams, which the user can correct or remove before opening it. */
+@Composable
+private fun MealEditor(meal: MealAnalysis, lang: String, onOpen: (MealAnalysis) -> Unit, onWrong: () -> Unit) {
+    var items by remember(meal) { mutableStateOf(meal.items) }
+    val totalGrams = items.sumOf { it.grams }
+    val totalKcal = items.sumOf { (it.per100.calories ?: 0.0) * it.grams / 100 }.roundToInt()
+    NufoCard(Modifier.fillMaxWidth()) {
+        Column(Modifier.padding(18.dp).animateContentSize(nufoSpring())) {
+            Text(meal.name(lang), style = MaterialTheme.typography.titleLarge)
+            Text(stringResource(R.string.meal_found), style = MaterialTheme.typography.labelMedium, color = LocalNufoColors.current.textSecondary)
+            Spacer(Modifier.height(8.dp))
+            items.forEachIndexed { i, item ->
+                key(item.nameEn, i) {
+                    MealRow(
+                        item, lang, Modifier.enterStagger(i),
+                        onGrams = { g -> items = items.map { if (it === item) it.copy(grams = g) else it } },
+                        onRemove = { items = items.filterNot { it === item } },
+                    )
+                }
+            }
+            Box(Modifier.padding(vertical = 10.dp).fillMaxWidth().height(1.dp).background(LocalNufoColors.current.hairline))
+            Text(stringResource(R.string.meal_total, totalGrams.toString() + " g", totalKcal), style = MaterialTheme.typography.titleMedium)
+            Spacer(Modifier.height(14.dp))
+            Button(
+                onClick = { onOpen(meal.copy(items = items)) }, enabled = items.isNotEmpty(),
+                modifier = Modifier.fillMaxWidth().height(52.dp), shape = RoundedCornerShape(16.dp),
+            ) { Text(stringResource(R.string.meal_open)) }
+            TextButton(onWrong, Modifier.fillMaxWidth()) { Text(stringResource(R.string.meal_wrong)) }
+            Text(stringResource(R.string.meal_estimate_note), style = MaterialTheme.typography.labelMedium, color = LocalNufoColors.current.textSecondary)
+        }
+    }
+}
+
+@Composable
+private fun MealRow(item: MealItem, lang: String, modifier: Modifier, onGrams: (Int) -> Unit, onRemove: () -> Unit) {
+    val name = item.name(lang)
+    val kcal = ((item.per100.calories ?: 0.0) * item.grams / 100).roundToInt()
+    // Small amounts move in small steps: 5 g of oil matters, 5 g of pasta does not.
+    val step = if (item.grams < 50) 5 else 10
+    Row(modifier.fillMaxWidth().padding(vertical = 6.dp), verticalAlignment = Alignment.CenterVertically) {
+        Column(Modifier.weight(1f)) {
+            Text(name, style = MaterialTheme.typography.bodyLarge)
+            val unsure = if (item.confidence < 0.6) " · " + stringResource(R.string.meal_unsure) else ""
+            Text(stringResource(R.string.meal_item_kcal, kcal) + unsure, style = MaterialTheme.typography.labelMedium, color = LocalNufoColors.current.textSecondary)
+        }
+        IconButton({ onGrams(maxOf(step, item.grams - step)) }) { Icon(Icons.Outlined.Remove, stringResource(R.string.meal_less, name)) }
+        AnimatedContent(item.grams, transitionSpec = { Motion.crossfade() }, label = "grams") { g ->
+            Text(g.toString() + " g", style = MaterialTheme.typography.titleMedium, textAlign = TextAlign.Center, modifier = Modifier.width(64.dp))
+        }
+        IconButton({ onGrams(item.grams + step) }) { Icon(Icons.Outlined.Add, stringResource(R.string.meal_more, name)) }
+        IconButton(onRemove) { Icon(Icons.Outlined.Close, stringResource(R.string.meal_remove, name), tint = LocalNufoColors.current.textSecondary) }
+    }
+}
+

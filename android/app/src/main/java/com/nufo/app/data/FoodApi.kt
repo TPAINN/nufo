@@ -10,6 +10,10 @@ import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.jsonObject
 import okhttp3.HttpUrl.Companion.toHttpUrl
+import okhttp3.MediaType.Companion.toMediaType
+import okhttp3.RequestBody.Companion.toRequestBody
+import kotlinx.serialization.json.buildJsonObject
+import kotlinx.serialization.json.put
 import okhttp3.OkHttpClient
 import okhttp3.Request
 import java.io.IOException
@@ -35,6 +39,19 @@ class FoodApi(
             if (res.code == 404) return@use JsonObject(emptyMap())
             if (!res.isSuccessful) throw ApiException("HTTP ${res.code}")
             Json.parseToJsonElement(res.body.string()).jsonObject
+        }
+    }
+
+    /** Meal analysis takes a model several seconds per photo: it gets its own, longer deadline. */
+    private val mealClient by lazy { client.newBuilder().callTimeout(45, TimeUnit.SECONDS).build() }
+
+    /** Sends one downscaled JPEG to the Nufo meal analysis service; the photo is not stored there. */
+    suspend fun analyzeMeal(jpeg: ByteArray): MealAnalysis = withContext(Dispatchers.IO) {
+        val body = buildJsonObject { put("image", java.util.Base64.getEncoder().encodeToString(jpeg)) }.toString()
+            .toRequestBody("application/json".toMediaType())
+        mealClient.newCall(Request.Builder().url(MealParser.ENDPOINT).post(body).build()).execute().use { res ->
+            if (!res.isSuccessful) throw ApiException("HTTP ${res.code}")
+            MealParser.parse(Json.parseToJsonElement(res.body.string()).jsonObject)
         }
     }
 

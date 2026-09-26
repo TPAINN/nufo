@@ -18,6 +18,7 @@ import com.nufo.app.data.ThemeMode
 import com.nufo.app.data.Units
 import com.nufo.app.data.LookupStep
 import com.nufo.app.data.Updates
+import com.nufo.app.data.toProduct
 import com.nufo.app.data.onlineFlow
 import com.nufo.app.ui.dataLang
 import kotlinx.coroutines.Job
@@ -147,15 +148,35 @@ class NufoViewModel(app: Application) : AndroidViewModel(app) {
 
     /** A photographed dish with bundled generic nutrition: opens it and saves it to history. False if none. */
     fun openDish(key: String, name: String, photo: android.graphics.Bitmap?): Boolean {
-        val dish = repo.dish(key, name) ?: return false
-        openProduct(dish)
-        // The user's own photo becomes the dish image once it is stored (off the main thread).
+        val dish = repo.dish(key, name, dataLang()) ?: return false
+        openWithPhoto(dish, photo)
+        return true
+    }
+
+    /** Identifies every food in a meal photo with the Nufo AI service (a ~1024 px JPEG is sent, never stored). */
+    suspend fun analyzeMeal(photo: android.graphics.Bitmap): Result<com.nufo.app.data.MealAnalysis> {
+        val jpeg = withContext(Dispatchers.Default) {
+            val scale = minOf(1f, 1024f / maxOf(photo.width, photo.height))
+            val small = android.graphics.Bitmap.createScaledBitmap(photo, (photo.width * scale).toInt(), (photo.height * scale).toInt(), true)
+            java.io.ByteArrayOutputStream().also { small.compress(android.graphics.Bitmap.CompressFormat.JPEG, 85, it) }.toByteArray()
+        }
+        return repo.analyzeMeal(jpeg)
+    }
+
+    /** The meal as the user confirmed it (their grams, their removals), opened and saved with its photo. */
+    fun openMeal(meal: com.nufo.app.data.MealAnalysis, photo: android.graphics.Bitmap?) {
+        val brand = getApplication<android.app.Application>().getString(R.string.meal_brand)
+        openWithPhoto(meal.toProduct(dataLang(), brand), photo)
+    }
+
+    private fun openWithPhoto(product: Product, photo: android.graphics.Bitmap?) {
+        openProduct(product)
+        // The user's own photo becomes the image once it is stored (off the main thread).
         viewModelScope.launch {
-            val withPhoto = photo?.let { withContext(Dispatchers.IO) { savePhoto(it) } }?.let { dish.copy(imageUrl = it) } ?: dish
-            _result.update { if (it is ResultState.Loaded && it.product.key == dish.key) ResultState.Loaded(withPhoto) else it }
+            val withPhoto = photo?.let { withContext(Dispatchers.IO) { savePhoto(it) } }?.let { product.copy(imageUrl = it) } ?: product
+            _result.update { if (it is ResultState.Loaded && it.product.key == product.key) ResultState.Loaded(withPhoto) else it }
             repo.save(withPhoto)
         }
-        return true
     }
 
     /** Keeps a photographed plate in app storage (never uploaded), downscaled; returns its file URI. */
@@ -243,6 +264,7 @@ class NufoViewModel(app: Application) : AndroidViewModel(app) {
     fun checkForUpdatesNow() = viewModelScope.launch { checkForUpdates() }
     fun dismissUpdatePrompt() { _updatePrompt.value = null }
     fun setAutoUpdates(on: Boolean) = viewModelScope.launch { store.setAutoUpdates(on) }
+    fun setSmartPhotos(on: Boolean) = viewModelScope.launch { store.setSmartPhotos(on) }
 
     fun finishOnboarding() = viewModelScope.launch { store.setOnboarded() }
     fun setUnits(u: Units) = viewModelScope.launch { store.setUnits(u) }

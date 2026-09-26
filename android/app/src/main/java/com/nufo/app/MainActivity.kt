@@ -263,6 +263,12 @@ private fun NufoNav(vm: NufoViewModel, startOnWelcome: Boolean) {
                         }
                     },
                     onClose = { nav.popBackStack() },
+                    smart = vm.settings.value?.smartPhotos ?: true,
+                    analyzeMeal = vm::analyzeMeal,
+                    onMeal = { meal, photo ->
+                        vm.openMeal(meal, photo)
+                        nav.navigate(Routes.RESULT) { popUpTo(Routes.PHOTO) { inclusive = true } }
+                    },
                 )
             }
             composable(Routes.RESULT) {

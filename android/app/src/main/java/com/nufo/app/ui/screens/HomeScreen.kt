@@ -61,6 +61,7 @@ import coil3.request.crossfade
 import com.nufo.app.data.offImage
 import com.nufo.app.ui.photoKey
 import com.nufo.app.ui.sharedPhoto
+import com.nufo.app.ui.PhotoCorners
 import com.nufo.app.R
 import com.nufo.app.ui.currentDataLang
 import com.nufo.app.ui.displayName
@@ -266,7 +267,7 @@ private fun SearchPill(onClick: () -> Unit, modifier: Modifier) {
 private fun RecentCard(p: Product, onClick: () -> Unit, modifier: Modifier) {
     NufoCard(modifier.width(150.dp), onClick = onClick, onClickLabel = stringResource(R.string.open_product, p.displayName())) {
         Box {
-            ProductThumb(p, Modifier.fillMaxWidth().height(104.dp))
+            ProductThumb(p, Modifier.fillMaxWidth().height(104.dp), PhotoCorners(top = 22.dp, bottom = 0.dp))
             // No badge at all when there is too little data for a score.
             if (com.nufo.app.data.Scoring.canScore(p)) Box(
                 Modifier.align(Alignment.TopEnd).padding(8.dp).size(30.dp).clip(CircleShape).background(scoreColor(p.nufoScore)),
@@ -290,14 +291,17 @@ private fun RecentCard(p: Product, onClick: () -> Unit, modifier: Modifier) {
  * full-resolution photo when it lands, so it is sharp without making anyone wait.
  */
 @Composable
-fun ProductThumb(p: Product, modifier: Modifier, hero: Boolean = false) =
-    ProductThumb(p.imageUrl, p.displayName(), modifier, hero, photoKey(p.barcode, p.name))
+fun ProductThumb(p: Product, modifier: Modifier, corners: PhotoCorners, hero: Boolean = false) =
+    ProductThumb(p.imageUrl, p.displayName(), modifier, corners, hero, photoKey(p.barcode, p.name))
 
 @Composable
-fun ProductThumb(imageUrl: String?, name: String, modifier: Modifier, hero: Boolean = false, sharedKey: String? = null) {
+fun ProductThumb(imageUrl: String?, name: String, modifier: Modifier, corners: PhotoCorners, hero: Boolean = false, sharedKey: String? = null) {
     val context = LocalContext.current
     Box(
-        modifier.then(if (sharedKey != null && imageUrl != null) Modifier.sharedPhoto(sharedKey) else Modifier)
+        modifier.then(
+            if (sharedKey != null && imageUrl != null) Modifier.sharedPhoto(sharedKey, corners)
+            else Modifier.clip(RoundedCornerShape(corners.top, corners.top, corners.bottom, corners.bottom)),
+        )
             .background(MaterialTheme.colorScheme.primaryContainer),
         contentAlignment = Alignment.Center,
     ) {
