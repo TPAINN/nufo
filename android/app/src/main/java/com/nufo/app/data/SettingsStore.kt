@@ -25,6 +25,8 @@ data class Settings(
     val autoUpdates: Boolean = true,
     /** Meal photos are identified by the Nufo AI service; off means on-device recognition only. */
     val smartPhotos: Boolean = true,
+    /** Values read from label photos are added to Open Food Facts, so the database gets them for everyone. */
+    val shareLabels: Boolean = true,
 )
 
 private val Context.store by preferencesDataStore("nufo_settings")
@@ -37,6 +39,7 @@ class SettingsStore(private val context: Context) {
     private val allergens = stringSetPreferencesKey("allergens")
     private val autoUpdates = booleanPreferencesKey("auto_updates")
     private val smartPhotos = booleanPreferencesKey("smart_photos")
+    private val shareLabels = booleanPreferencesKey("share_labels")
     private val lastUpdateCheck = longPreferencesKey("last_update_check")
 
     val settings = context.store.data.map { p ->
@@ -48,6 +51,7 @@ class SettingsStore(private val context: Context) {
             allergenAlerts = p[allergens] ?: emptySet(),
             autoUpdates = p[autoUpdates] ?: true,
             smartPhotos = p[smartPhotos] ?: true,
+            shareLabels = p[shareLabels] ?: true,
         )
     }
 
@@ -55,6 +59,7 @@ class SettingsStore(private val context: Context) {
     suspend fun setUnits(v: Units) = context.store.edit { it[units] = v.name }
     suspend fun setTheme(v: ThemeMode) = context.store.edit { it[theme] = v.name }
     suspend fun setDiet(v: Diet) = context.store.edit { it[diet] = v.name }
+    suspend fun setShareLabels(v: Boolean) = context.store.edit { it[shareLabels] = v }
     suspend fun setSmartPhotos(v: Boolean) = context.store.edit { it[smartPhotos] = v }
     suspend fun setAutoUpdates(v: Boolean) = context.store.edit { it[autoUpdates] = v }
     suspend fun lastUpdateCheck(): Long = context.store.data.first()[lastUpdateCheck] ?: 0L

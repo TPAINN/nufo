@@ -39,6 +39,12 @@ data class Product(
     val isDish: Boolean = false,
     /** The dish's typical recipe as grams per 100 g of dish, largest first (bundled dishes only). */
     val recipe: List<RecipePart> = emptyList(),
+    /** Some facts were read from a photo of the package label because the database lacked them. */
+    val filledFromLabel: Boolean = false,
+    /** The Nutri-Score was computed from label values, not published by the source. */
+    val nutriscoreFromLabel: Boolean = false,
+    /** The NOVA group was estimated from the label's ingredient list, not published by the source. */
+    val novaFromLabel: Boolean = false,
 ) {
     /** Stable key for history: barcode when known, otherwise source + name. */
     val key: String get() = barcode ?: "$source:$name"

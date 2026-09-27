@@ -1,5 +1,7 @@
 package com.nufo.app.ui.screens
 
+import androidx.compose.material.icons.outlined.DocumentScanner
+import com.nufo.app.data.missingLabelFacts
 import kotlin.math.roundToInt
 import com.nufo.app.data.UsdaParser
 import com.nufo.app.data.MealParser
@@ -222,7 +224,7 @@ fun ResultScreen(vm: NufoViewModel, onBack: () -> Unit, onSearch: (String) -> Un
         ) { s ->
             when (s) {
                 is ResultState.Loading -> LoadingSkeleton(s.preview, s.step)
-                is ResultState.NotFound -> NotFound(s.barcode, s.identified, onSearch)
+                is ResultState.NotFound -> NotFound(s.barcode, s.identified, vm, onSearch)
                 is ResultState.Error -> Message(
                     if (s.offline) Icons.Outlined.WifiOff else Icons.Outlined.CloudOff,
                     stringResource(if (s.offline) R.string.error_offline_title else R.string.error_server_title),
@@ -251,7 +253,7 @@ private fun shareText(p: Product) = buildString {
 }
 
 @Composable
-private fun NotFound(barcode: String?, identified: Identified?, onSearch: (String) -> Unit) {
+private fun NotFound(barcode: String?, identified: Identified?, vm: NufoViewModel, onSearch: (String) -> Unit) {
     val context = LocalContext.current
     Message(
         if (identified != null) Icons.Outlined.Info else Icons.Outlined.SearchOff,
@@ -262,6 +264,11 @@ private fun NotFound(barcode: String?, identified: Identified?, onSearch: (Strin
             else -> stringResource(R.string.not_found_body_generic)
         },
     ) {
+        // The label is the fastest way to a full answer for a product no database has yet.
+        if (barcode != null) {
+            LabelCard(vm, missing = true)
+            Spacer(Modifier.height(16.dp))
+        }
         if (identified != null) {
             ProductThumb(identified.imageUrl, identified.name, Modifier.size(120.dp), PhotoCorners(20.dp))
             Spacer(Modifier.height(16.dp))
@@ -285,7 +292,7 @@ private fun NotFound(barcode: String?, identified: Identified?, onSearch: (Strin
 @Composable
 private fun Message(icon: ImageVector, title: String, body: String, actions: @Composable () -> Unit) {
     Column(
-        Modifier.fillMaxSize().padding(32.dp),
+        Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(32.dp),
         horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.Center,
     ) {
         Box(Modifier.size(76.dp).clip(CircleShape).background(MaterialTheme.colorScheme.primaryContainer), contentAlignment = Alignment.Center) {
@@ -423,7 +430,15 @@ private fun ProductDetail(p: Product, cachedAt: Long?, vm: NufoViewModel, units:
             p.completeness?.let { TrustChip(Icons.Outlined.DataUsage, stringResource(R.string.trust_completeness, (it * 100).toInt())) }
             if (p.soldInGreece) TrustChip(Icons.Outlined.Place, stringResource(R.string.sold_in_greece))
             if (p.source == UsdaParser.SOURCE && !p.isDish && lang == "el") TrustChip(Icons.Outlined.Info, stringResource(R.string.usda_english), tint = GradeC)
+            if (p.filledFromLabel) TrustChip(Icons.Outlined.DocumentScanner, stringResource(R.string.trust_label))
         }
+
+        // Missing facts can be read from the package itself, and shared back to Open Food Facts.
+        Spacer(Modifier.height(14.dp))
+        LabelCard(
+            vm, missing = p.missingLabelFacts(), modifier = Modifier.padding(horizontal = 20.dp).enterStagger(3),
+            unnamed = p.name.isBlank(), needsIngredients = p.filledFromLabel && p.ingredientsText == null,
+        )
 
         val allergenHits = p.matchingAllergens(alerts)
         val note = dietNote(p, diet)
@@ -580,6 +595,9 @@ private fun ScoreCard(p: Product, onMethod: () -> Unit, modifier: Modifier) {
             }
             NutriScoreScale(p.nutriscoreGrade)
             NovaScale(p.novaGroup)
+            if (p.nutriscoreFromLabel || p.novaFromLabel) {
+                Text(stringResource(R.string.label_grades_note), style = MaterialTheme.typography.labelMedium, color = LocalNufoColors.current.textSecondary)
+            }
             EcoScoreScale(p.ecoscoreGrade)
             Box(Modifier.fillMaxWidth().height(1.dp).background(LocalNufoColors.current.hairline))
             val reasons = if (Scoring.canScore(p)) Scoring.reasons(p) else emptyList()

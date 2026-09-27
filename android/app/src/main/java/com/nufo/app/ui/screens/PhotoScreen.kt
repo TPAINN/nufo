@@ -115,7 +115,7 @@ private sealed interface PhotoState {
 private val NOTHING_FOUND = PhotoAnalysis(null, emptyList(), emptyList(), emptyList())
 
 /** Decodes a picked photo at most ~1600 px on its long side: analysis needs no more, and huge photos cost memory. */
-private fun decode(context: android.content.Context, uri: Uri): Bitmap =
+internal fun decode(context: android.content.Context, uri: Uri): Bitmap =
     if (Build.VERSION.SDK_INT >= 28) {
         ImageDecoder.decodeBitmap(ImageDecoder.createSource(context.contentResolver, uri)) { d, info, _ ->
             val scale = 1600f / maxOf(info.size.width, info.size.height)
