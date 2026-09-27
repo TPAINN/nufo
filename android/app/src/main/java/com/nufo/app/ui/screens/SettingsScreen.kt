@@ -82,7 +82,8 @@ fun SettingsScreen(vm: NufoViewModel) {
     val lang = currentDataLang()
     var confirmClear by remember { mutableStateOf(false) }
     var about by remember { mutableStateOf(false) }
-    fun open(url: String) = context.startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(url)))
+    // A phone with no browser (kiosk and some work profiles) has nothing to open the link with: do nothing rather than crash.
+    fun open(url: String) { runCatching { context.startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(url))) } }
 
     Column(
         Modifier.fillMaxSize().statusBarsPadding().verticalScroll(rememberScrollState()).padding(20.dp),
@@ -102,7 +103,7 @@ fun SettingsScreen(vm: NufoViewModel) {
             } else {
                 Row(
                     Modifier.fillMaxWidth().clickable(role = Role.Button) {
-                        context.startActivity(Intent(AndroidSettings.ACTION_LOCALE_SETTINGS))
+                        runCatching { context.startActivity(Intent(AndroidSettings.ACTION_LOCALE_SETTINGS)) }
                     },
                     verticalAlignment = Alignment.CenterVertically,
                 ) {

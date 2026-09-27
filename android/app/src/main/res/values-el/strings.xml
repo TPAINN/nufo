@@ -293,6 +293,7 @@
     <string name="photo_no_food">Δεν βλέπω φαγητό σε αυτή τη φωτογραφία. Δοκιμάστε άλλη ή γράψτε τι είναι.</string>
     <string name="footer_ai">Τρόφιμα και ποσότητες εκτιμήθηκαν με AI από τη φωτογραφία σας· διατροφή από το USDA FoodData Central όπου ταιριάζει, αλλιώς εκτίμηση AI. Ελέγξτε τη με το πιάτο σας.</string>
     <string name="recipe_subtitle_photo">Από τη φωτογραφία σας, ποσότητες για %1$s.</string>
+    <string name="photo_camera_denied">Το Nufo χρειάζεται πρόσβαση στην κάμερα για τη φωτογραφία. Επιτρέψτε την από τις ρυθμίσεις του κινητού ή διαλέξτε μία από τη συλλογή.</string>
     <string name="s_data">Τα δεδομένα σας</string>
     <string name="s_clear">Διαγραφή ιστορικού και προσωρινής μνήμης</string>
     <string name="s_clear_title">Διαγραφή τοπικών δεδομένων;</string>

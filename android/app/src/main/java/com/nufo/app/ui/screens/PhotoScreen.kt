@@ -1,5 +1,8 @@
 package com.nufo.app.ui.screens
 
+import androidx.core.content.ContextCompat
+import android.content.pm.PackageManager
+import android.Manifest
 import com.nufo.app.ui.components.Wait
 import com.nufo.app.ui.components.waited
 import com.nufo.app.ui.components.enterStagger
@@ -155,8 +158,17 @@ fun PhotoScreen(
     val gallery = rememberLauncherForActivityResult(ActivityResultContracts.PickVisualMedia()) { uri ->
         if (uri != null) bitmap = runCatching { decode(context, uri) }.getOrElse { state = PhotoState.Failed(openFailed); null }
     }
+    val cameraDenied = stringResource(R.string.photo_camera_denied)
+    // The app declares CAMERA (for the barcode scanner), so Android refuses to open the camera app for a photo
+    // unless that permission is granted: without this check "Take photo" crashed for anyone who had denied it.
+    val cameraPermission = rememberLauncherForActivityResult(ActivityResultContracts.RequestPermission()) { granted ->
+        if (granted) runCatching { camera.launch(null) } else state = PhotoState.Failed(cameraDenied)
+    }
     fun pick(fromCamera: Boolean) {
-        if (fromCamera) camera.launch(null) else gallery.launch(PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly))
+        if (!fromCamera) { gallery.launch(PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly)); return }
+        val granted = ContextCompat.checkSelfPermission(context, Manifest.permission.CAMERA) == PackageManager.PERMISSION_GRANTED
+        if (granted) runCatching { camera.launch(null) }.onFailure { state = PhotoState.Failed(openFailed) }
+        else cameraPermission.launch(Manifest.permission.CAMERA)
     }
     LaunchedEffect(Unit) { if (!launched) { launched = true; pick(source == "camera") } }
     LaunchedEffect(bitmap) {

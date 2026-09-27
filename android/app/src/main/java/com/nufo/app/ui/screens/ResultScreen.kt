@@ -210,7 +210,7 @@ fun ResultScreen(vm: NufoViewModel, onBack: () -> Unit, onSearch: (String) -> Un
                 }
                 val text = shareText(p)
                 IconButton({
-                    context.startActivity(Intent.createChooser(Intent(Intent.ACTION_SEND).setType("text/plain").putExtra(Intent.EXTRA_TEXT, text), shareTitle))
+                    runCatching { context.startActivity(Intent.createChooser(Intent(Intent.ACTION_SEND).setType("text/plain").putExtra(Intent.EXTRA_TEXT, text), shareTitle)) }
                 }) { Icon(Icons.Outlined.Share, shareTitle) }
             }
         }
@@ -271,7 +271,7 @@ private fun NotFound(barcode: String?, identified: Identified?, onSearch: (Strin
             Spacer(Modifier.height(10.dp))
             // Contributing on the Open Food Facts site makes the product available to everyone, Nufo included.
             OutlinedButton(
-                { context.startActivity(Intent(Intent.ACTION_VIEW, Uri.parse("https://world.openfoodfacts.org/cgi/product.pl?type=add&code=$barcode"))) },
+                { runCatching { context.startActivity(Intent(Intent.ACTION_VIEW, Uri.parse("https://world.openfoodfacts.org/cgi/product.pl?type=add&code=$barcode"))) } },
                 shape = RoundedCornerShape(16.dp),
             ) {
                 Icon(Icons.Outlined.AddCircleOutline, null, Modifier.size(18.dp))
