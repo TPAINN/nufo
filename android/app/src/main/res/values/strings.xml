@@ -318,6 +318,17 @@
     <string name="footer_ai">Foods and amounts estimated by AI from your photo; nutrition from USDA FoodData Central where it matches, otherwise AI estimates. Check it against your plate.</string>
     <string name="recipe_subtitle_photo">Found in your photo, amounts for %1$s.</string>
     <string name="photo_camera_denied">Nufo needs camera access to take the photo. You can allow it in the phone\'s settings, or pick one from the gallery.</string>
+    <string name="update_now">Update now</string>
+    <string name="update_body_inapp">Version %1$s is ready. It updates right here in a few seconds, and your history stays.</string>
+    <string name="update_downloading">Downloading… %1$d%%</string>
+    <string name="update_downloading_unknown">Downloading…</string>
+    <string name="update_installing">Opening the installer… Tap Update to finish.</string>
+    <string name="update_install">Install</string>
+    <string name="update_permission">Android asks once before Nufo can install its own updates. Allow it on the next screen, then come back.</string>
+    <string name="update_allow">Allow</string>
+    <string name="update_failed">The download did not finish. Try again, or get it from the Nufo site.</string>
+    <string name="update_retry">Try again</string>
+    <string name="update_site">Nufo site</string>
     <string name="s_data">Your data</string>
     <string name="s_clear">Clear history and cache</string>
     <string name="s_clear_title">Clear local data?</string>

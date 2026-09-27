@@ -30,8 +30,8 @@ android {
         applicationId = "com.nufo.app"
         minSdk = 26
         targetSdk = 36
-        versionCode = 4
-        versionName = "1.0.3"
+        versionCode = 5
+        versionName = "1.0.4"
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
         buildConfigField("String", "USDA_API_KEY", "\"${secret("USDA_API_KEY", "DEMO_KEY")}\"")
     }

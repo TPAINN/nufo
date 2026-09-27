@@ -153,7 +153,7 @@ fun SettingsScreen(vm: NufoViewModel) {
         Group(stringResource(R.string.s_photos), 7) {
             ToggleRow(stringResource(R.string.s_smart_photos), stringResource(R.string.s_smart_photos_body), s.smartPhotos, vm::setSmartPhotos)
         }
-        Group(stringResource(R.string.s_updates), 8) { UpdatesSection(vm, s.autoUpdates) { open(it) } }
+        Group(stringResource(R.string.s_updates), 8) { UpdatesSection(vm, s.autoUpdates) }
         Group(stringResource(R.string.s_data), 9) {
             Row(
                 Modifier.fillMaxWidth().clickable(role = Role.Button) { confirmClear = true }.padding(vertical = 4.dp),
@@ -198,7 +198,7 @@ private fun ToggleRow(title: String, body: String, checked: Boolean, onChange: (
 }
 
 @Composable
-private fun UpdatesSection(vm: NufoViewModel, auto: Boolean, onDownload: (String) -> Unit) {
+private fun UpdatesSection(vm: NufoViewModel, auto: Boolean) {
     val state by vm.update.collectAsStateWithLifecycle()
     ToggleRow(stringResource(R.string.s_auto_updates), stringResource(R.string.s_auto_updates_body), auto, vm::setAutoUpdates)
     // Manual checking is revealed only when the automatic one is off; an available update always shows.
@@ -210,7 +210,7 @@ private fun UpdatesSection(vm: NufoViewModel, auto: Boolean, onDownload: (String
         Column(Modifier.padding(top = 12.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
             val available = state as? UpdateState.Available
             if (available != null) {
-                Button({ onDownload(available.update.url) }, Modifier.fillMaxWidth()) {
+                Button({ vm.offerUpdate(available.update) }, Modifier.fillMaxWidth()) {
                     Text(stringResource(R.string.s_update_download) + " " + available.update.version)
                 }
             } else {
