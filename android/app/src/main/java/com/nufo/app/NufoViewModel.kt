@@ -51,6 +51,14 @@ sealed interface PricesState {
     data object Failed : PricesState
 }
 
+/** An update being brought in: downloading ([progress] 0..1, or -1 while the size is unknown), then ready to install. */
+sealed interface InstallState {
+    data object Idle : InstallState
+    data class Downloading(val progress: Float) : InstallState
+    data class Ready(val apk: java.io.File) : InstallState
+    data object Failed : InstallState
+}
+
 sealed interface UpdateState {
     data object Idle : UpdateState
     data object Checking : UpdateState
@@ -103,7 +111,13 @@ class NufoViewModel(app: Application) : AndroidViewModel(app) {
     private val _updatePrompt = MutableStateFlow<AppUpdate?>(null)
     val updatePrompt = _updatePrompt.asStateFlow()
 
+    val installer = com.nufo.app.data.AppInstaller(app)
+    private val _install = MutableStateFlow<InstallState>(InstallState.Idle)
+    val install = _install.asStateFlow()
+    private var installJob: Job? = null
+
     init {
+        viewModelScope.launch(Dispatchers.IO) { installer.cleanUp() }
         // At most one automatic check per day, on opening; a failure (offline) is retried at the next opening.
         viewModelScope.launch {
             if (!store.settings.first().autoUpdates) return@launch
@@ -262,7 +276,29 @@ class NufoViewModel(app: Application) : AndroidViewModel(app) {
         return found
     }
     fun checkForUpdatesNow() = viewModelScope.launch { checkForUpdates() }
-    fun dismissUpdatePrompt() { _updatePrompt.value = null }
+    fun dismissUpdatePrompt() {
+        if (_install.value is InstallState.Downloading) return // closing mid-download would lose it
+        _updatePrompt.value = null
+        if (_install.value !is InstallState.Ready) _install.value = InstallState.Idle
+    }
+
+    /** Opens the update dialog (from Settings or the daily check). */
+    fun offerUpdate(update: AppUpdate) { _updatePrompt.value = update }
+
+    /** Downloads the update inside the app; the dialog then hands it to the system installer. */
+    fun downloadUpdate(update: AppUpdate) {
+        if (installJob?.isActive == true) return
+        _install.value = InstallState.Downloading(0f)
+        installJob = viewModelScope.launch {
+            _install.value = runCatching {
+                var last = 0L
+                installer.download(update) { p ->
+                    val now = System.currentTimeMillis()
+                    if (now - last > 100 || p >= 1f) { last = now; _install.value = InstallState.Downloading(p) }
+                }
+            }.fold({ InstallState.Ready(it) }, { android.util.Log.w("Nufo", "Update download failed", it); InstallState.Failed })
+        }
+    }
     fun setAutoUpdates(on: Boolean) = viewModelScope.launch { store.setAutoUpdates(on) }
     fun setSmartPhotos(on: Boolean) = viewModelScope.launch { store.setSmartPhotos(on) }
 

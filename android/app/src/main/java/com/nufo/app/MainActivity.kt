@@ -61,6 +61,7 @@ import androidx.compose.material3.Text
 import androidx.compose.ui.res.stringResource
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -146,21 +147,85 @@ class MainActivity : ComponentActivity() {
         }
     }
 }
+/**
+ * A newer version, updated in place: download inside the app with progress, then the system installer. Android asks
+ * once per app before it may install updates; the dialog explains that and carries on when the user comes back.
+ * Without a usable APK in the release (or after a failed download) it falls back to the download page.
+ */
 @Composable
 private fun UpdatePrompt(vm: NufoViewModel) {
     val update = vm.updatePrompt.collectAsStateWithLifecycle().value ?: return
+    val install by vm.install.collectAsStateWithLifecycle()
     val context = androidx.compose.ui.platform.LocalContext.current
+    fun open(intent: android.content.Intent) = runCatching { context.startActivity(intent) }.isSuccess
+    fun openSite() { open(android.content.Intent(android.content.Intent.ACTION_VIEW, android.net.Uri.parse(update.url))); vm.dismissUpdatePrompt() }
+    val inApp = vm.installer.apkFor(update) != null
+    var canInstall by androidx.compose.runtime.remember { androidx.compose.runtime.mutableStateOf(vm.installer.canInstall()) }
+    // Coming back from the "Install unknown apps" page: re-check, and install at once if it was allowed.
+    val lifecycle = androidx.lifecycle.compose.LocalLifecycleOwner.current.lifecycle
+    androidx.compose.runtime.DisposableEffect(lifecycle) {
+        val observer = androidx.lifecycle.LifecycleEventObserver { _, e ->
+            if (e == androidx.lifecycle.Lifecycle.Event.ON_RESUME) canInstall = vm.installer.canInstall()
+        }
+        lifecycle.addObserver(observer)
+        onDispose { lifecycle.removeObserver(observer) }
+    }
+    val ready = install as? InstallState.Ready
+    androidx.compose.runtime.LaunchedEffect(ready, canInstall) {
+        if (ready != null && canInstall) open(vm.installer.installIntent(ready.apk))
+    }
+    val downloading = install as? InstallState.Downloading
     androidx.compose.material3.AlertDialog(
         onDismissRequest = vm::dismissUpdatePrompt,
+        properties = androidx.compose.ui.window.DialogProperties(dismissOnClickOutside = downloading == null, dismissOnBackPress = downloading == null),
         title = { Text(stringResource(R.string.s_update_title)) },
-        text = { Text(stringResource(R.string.s_update_body, update.version)) },
-        confirmButton = {
-            androidx.compose.material3.TextButton({
-                vm.dismissUpdatePrompt()
-                runCatching { context.startActivity(android.content.Intent(android.content.Intent.ACTION_VIEW, android.net.Uri.parse(update.url))) }
-            }) { Text(stringResource(R.string.s_update_download)) }
+        text = {
+            androidx.compose.animation.AnimatedContent(install, contentKey = { it::class }, transitionSpec = { Motion.crossfade() }, label = "update-dialog") { st ->
+                Column(verticalArrangement = androidx.compose.foundation.layout.Arrangement.spacedBy(14.dp)) {
+                    when {
+                        !inApp -> Text(stringResource(R.string.s_update_body, update.version))
+                        st is InstallState.Idle -> Text(stringResource(R.string.update_body_inapp, update.version))
+                        st is InstallState.Downloading -> {
+                            Text(
+                                if (st.progress < 0) stringResource(R.string.update_downloading_unknown)
+                                else stringResource(R.string.update_downloading, (st.progress * 100).toInt()),
+                            )
+                            val shown by androidx.compose.animation.core.animateFloatAsState(st.progress.coerceAtLeast(0f), label = "update-progress")
+                            if (st.progress < 0) androidx.compose.material3.LinearProgressIndicator(Modifier.fillMaxWidth())
+                            else androidx.compose.material3.LinearProgressIndicator({ shown }, Modifier.fillMaxWidth())
+                        }
+                        st is InstallState.Ready && !canInstall -> Text(stringResource(R.string.update_permission))
+                        st is InstallState.Ready -> Text(stringResource(R.string.update_installing))
+                        else -> Text(stringResource(R.string.update_failed))
+                    }
+                }
+            }
         },
-        dismissButton = { androidx.compose.material3.TextButton(vm::dismissUpdatePrompt) { Text(stringResource(R.string.s_update_later)) } },
+        confirmButton = {
+            val label = when {
+                !inApp -> R.string.s_update_download
+                install is InstallState.Idle -> R.string.update_now
+                ready != null && !canInstall -> R.string.update_allow
+                ready != null -> R.string.update_install
+                install is InstallState.Failed -> R.string.update_retry
+                else -> null
+            }
+            if (label != null) androidx.compose.material3.TextButton({
+                when {
+                    !inApp -> openSite()
+                    ready != null && !canInstall -> open(vm.installer.permissionIntent())
+                    ready != null -> open(vm.installer.installIntent(ready.apk))
+                    else -> vm.downloadUpdate(update)
+                }
+            }) { Text(stringResource(label)) }
+        },
+        dismissButton = {
+            when {
+                downloading != null -> Unit
+                install is InstallState.Failed -> androidx.compose.material3.TextButton(::openSite) { Text(stringResource(R.string.update_site)) }
+                else -> androidx.compose.material3.TextButton(vm::dismissUpdatePrompt) { Text(stringResource(R.string.s_update_later)) }
+            }
+        },
     )
 }
 

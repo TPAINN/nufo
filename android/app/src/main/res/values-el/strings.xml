@@ -294,6 +294,17 @@
     <string name="footer_ai">Τρόφιμα και ποσότητες εκτιμήθηκαν με AI από τη φωτογραφία σας· διατροφή από το USDA FoodData Central όπου ταιριάζει, αλλιώς εκτίμηση AI. Ελέγξτε τη με το πιάτο σας.</string>
     <string name="recipe_subtitle_photo">Από τη φωτογραφία σας, ποσότητες για %1$s.</string>
     <string name="photo_camera_denied">Το Nufo χρειάζεται πρόσβαση στην κάμερα για τη φωτογραφία. Επιτρέψτε την από τις ρυθμίσεις του κινητού ή διαλέξτε μία από τη συλλογή.</string>
+    <string name="update_now">Ενημέρωση τώρα</string>
+    <string name="update_body_inapp">Η έκδοση %1$s είναι έτοιμη. Ενημερώνεται εδώ, σε λίγα δευτερόλεπτα, και το ιστορικό σας μένει.</string>
+    <string name="update_downloading">Γίνεται λήψη… %1$d%%</string>
+    <string name="update_downloading_unknown">Γίνεται λήψη…</string>
+    <string name="update_installing">Ανοίγει η εγκατάσταση… Πατήστε «Ενημέρωση» για να ολοκληρωθεί.</string>
+    <string name="update_install">Εγκατάσταση</string>
+    <string name="update_permission">Το Android ζητά μία φορά την άδειά σας για να εγκαθιστά το Nufo τις ενημερώσεις του. Επιτρέψτε το στην επόμενη οθόνη και επιστρέψτε.</string>
+    <string name="update_allow">Επιτρέψτε</string>
+    <string name="update_failed">Η λήψη δεν ολοκληρώθηκε. Δοκιμάστε ξανά ή κατεβάστε την από τη σελίδα του Nufo.</string>
+    <string name="update_retry">Ξανά</string>
+    <string name="update_site">Σελίδα Nufo</string>
     <string name="s_data">Τα δεδομένα σας</string>
     <string name="s_clear">Διαγραφή ιστορικού και προσωρινής μνήμης</string>
     <string name="s_clear_title">Διαγραφή τοπικών δεδομένων;</string>
