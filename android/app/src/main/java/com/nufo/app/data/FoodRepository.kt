@@ -57,9 +57,13 @@ class FoodRepository(private val api: FoodApi, private val dao: HistoryDao, priv
                 onStep(LookupStep.Usda)
                 api.usdaSearch(barcode, pageSize = 5).firstOrNull { it.product?.barcode?.trimStart('0') == barcode.trimStart('0') }?.product
             }
+        // What the user read from the package label earlier fills whatever the databases still lack.
+        val fromLabel = dao.get(barcode)?.let { decode(it.json) }?.takeIf { it.filledFromLabel }
         if (product != null) {
             cache.upsert(CachedProduct(barcode, encode(product), System.currentTimeMillis()))
-            Lookup.Found(product)
+            Lookup.Found(if (fromLabel != null) product.fillMissingFrom(fromLabel) else product)
+        } else if (fromLabel != null) {
+            Lookup.Found(fromLabel)
         } else {
             onStep(LookupStep.OtherDatabases)
             Lookup.NotFound(api.identify(barcode))
@@ -120,6 +124,9 @@ class FoodRepository(private val api: FoodApi, private val dao: HistoryDao, priv
     }
 
     suspend fun analyzeMeal(jpeg: ByteArray): Result<MealAnalysis> = runCatching { api.analyzeMeal(jpeg) }
+
+    suspend fun readLabel(jpegs: List<ByteArray>, barcode: String?, share: Boolean): Result<LabelReading?> =
+        runCatching { api.readLabel(jpegs, barcode, share) }
 
     suspend fun latestUpdate(current: String): Result<AppUpdate?> = runCatching { api.latestUpdate(current) }
 

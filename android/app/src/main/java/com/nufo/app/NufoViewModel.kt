@@ -19,6 +19,7 @@ import com.nufo.app.data.Units
 import com.nufo.app.data.LookupStep
 import com.nufo.app.data.Updates
 import com.nufo.app.data.toProduct
+import com.nufo.app.data.withLabel
 import com.nufo.app.data.onlineFlow
 import com.nufo.app.ui.dataLang
 import kotlinx.coroutines.Job
@@ -49,6 +50,16 @@ sealed interface PricesState {
     data object Loading : PricesState
     data class Loaded(val reports: List<PriceReport>) : PricesState
     data object Failed : PricesState
+}
+
+/** Reading a photographed package label to fill in what the databases lack. */
+sealed interface LabelState {
+    data object Idle : LabelState
+    data object Reading : LabelState
+    /** [contributed]: the values were also added to Open Food Facts. */
+    data class Done(val contributed: Boolean) : LabelState
+    /** [unreadable]: the photo showed no readable nutrition table (as opposed to a network failure). */
+    data class Failed(val unreadable: Boolean) : LabelState
 }
 
 /** An update being brought in: downloading ([progress] 0..1, or -1 while the size is unknown), then ready to install. */
@@ -83,6 +94,13 @@ data class SearchState(
 fun typedBarcode(query: String): String? = query.filterNot { it.isWhitespace() }.takeIf { TYPED_BARCODE.matches(it) }
 private val TYPED_BARCODE = Regex("""\d{8}|\d{12,14}""")
 
+/** A JPEG no larger than [maxSide] px on its long side: enough to read, small enough to send quickly. */
+private fun android.graphics.Bitmap.toJpeg(maxSide: Int, quality: Int): ByteArray {
+    val scale = minOf(1f, maxSide.toFloat() / maxOf(width, height))
+    val small = if (scale < 1f) android.graphics.Bitmap.createScaledBitmap(this, (width * scale).toInt(), (height * scale).toInt(), true) else this
+    return java.io.ByteArrayOutputStream().also { small.compress(android.graphics.Bitmap.CompressFormat.JPEG, quality, it) }.toByteArray()
+}
+
 class NufoViewModel(app: Application) : AndroidViewModel(app) {
     private val repo = (app as NufoApp).repository
     private val store = (app as NufoApp).settings
@@ -110,6 +128,10 @@ class NufoViewModel(app: Application) : AndroidViewModel(app) {
     /** A newer version found by the daily automatic check, offered once in a dialog. */
     private val _updatePrompt = MutableStateFlow<AppUpdate?>(null)
     val updatePrompt = _updatePrompt.asStateFlow()
+
+    private val _label = MutableStateFlow<LabelState>(LabelState.Idle)
+    val label = _label.asStateFlow()
+    private var labelJob: Job? = null
 
     val installer = com.nufo.app.data.AppInstaller(app)
     private val _install = MutableStateFlow<InstallState>(InstallState.Idle)
@@ -149,11 +171,13 @@ class NufoViewModel(app: Application) : AndroidViewModel(app) {
     }
 
     fun openBarcode(barcode: String) {
+        resetLabel()
         _result.value = ResultState.Loading()
         viewModelScope.launch { show(repo.lookupBarcode(barcode, dataLang(), ::onStep), barcode) { openBarcode(barcode) } }
     }
 
     fun openHit(hit: SearchHit) {
+        resetLabel()
         _result.value = ResultState.Loading(hit)
         viewModelScope.launch { show(repo.product(hit, dataLang(), ::onStep), hit.barcode) { openHit(hit) } }
     }
@@ -167,13 +191,48 @@ class NufoViewModel(app: Application) : AndroidViewModel(app) {
         return true
     }
 
+    /**
+     * Reads the nutrition table on a photographed package and fills in what the current product lacks (or, for an
+     * unknown barcode, builds the product from it). The result is saved like any scanned product.
+     */
+    fun readLabel(photos: List<android.graphics.Bitmap>) {
+        if (labelJob?.isActive == true) return
+        val current = _result.value
+        val barcode = when (current) { is ResultState.Loaded -> current.product.barcode; is ResultState.NotFound -> current.barcode; else -> null }
+        _label.value = LabelState.Reading
+        labelJob = viewModelScope.launch {
+            val jpegs = withContext(Dispatchers.Default) { photos.map { it.toJpeg(1600, 88) } }
+            val share = store.settings.first().shareLabels
+            _label.value = repo.readLabel(jpegs, barcode, share).fold(
+                { reading ->
+                    if (reading == null) return@fold LabelState.Failed(unreadable = true)
+                    val product = when (val r = _result.value) {
+                        is ResultState.Loaded -> r.product.withLabel(reading)
+                        is ResultState.NotFound -> reading.toProduct(r.barcode, r.identified)
+                        else -> return@fold LabelState.Failed(unreadable = false)
+                    }
+                    _result.value = ResultState.Loaded(product)
+                    repo.save(product)
+                    LabelState.Done(reading.contributed)
+                },
+                { android.util.Log.w("Nufo", "Label reading failed", it); LabelState.Failed(unreadable = false) },
+            )
+        }
+    }
+
+    /** Names a product built from its label (nutrition tables rarely print the name). */
+    fun renameProduct(name: String) {
+        val r = _result.value as? ResultState.Loaded ?: return
+        val renamed = r.product.copy(name = name)
+        _result.value = r.copy(product = renamed)
+        viewModelScope.launch { repo.save(renamed) }
+    }
+
+    fun resetLabel() { if (_label.value !is LabelState.Reading) _label.value = LabelState.Idle }
+
     /** Identifies every food in a meal photo with the Nufo AI service (a ~1024 px JPEG is sent, never stored). */
     suspend fun analyzeMeal(photo: android.graphics.Bitmap): Result<com.nufo.app.data.MealAnalysis> {
-        val jpeg = withContext(Dispatchers.Default) {
-            val scale = minOf(1f, 1024f / maxOf(photo.width, photo.height))
-            val small = android.graphics.Bitmap.createScaledBitmap(photo, (photo.width * scale).toInt(), (photo.height * scale).toInt(), true)
-            java.io.ByteArrayOutputStream().also { small.compress(android.graphics.Bitmap.CompressFormat.JPEG, 85, it) }.toByteArray()
-        }
+        val jpeg = withContext(Dispatchers.Default) { photo.toJpeg(1024, 85) }
         return repo.analyzeMeal(jpeg)
     }
 
@@ -204,6 +263,7 @@ class NufoViewModel(app: Application) : AndroidViewModel(app) {
     }.getOrNull()
 
     fun openProduct(p: Product) {
+        resetLabel()
         _result.value = ResultState.Loaded(p)
         loadPrices(p)
     }
@@ -301,6 +361,7 @@ class NufoViewModel(app: Application) : AndroidViewModel(app) {
     }
     fun setAutoUpdates(on: Boolean) = viewModelScope.launch { store.setAutoUpdates(on) }
     fun setSmartPhotos(on: Boolean) = viewModelScope.launch { store.setSmartPhotos(on) }
+    fun setShareLabels(on: Boolean) = viewModelScope.launch { store.setShareLabels(on) }
 
     fun finishOnboarding() = viewModelScope.launch { store.setOnboarded() }
     fun setUnits(u: Units) = viewModelScope.launch { store.setUnits(u) }

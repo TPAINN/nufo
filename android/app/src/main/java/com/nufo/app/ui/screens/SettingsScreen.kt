@@ -152,6 +152,8 @@ fun SettingsScreen(vm: NufoViewModel) {
         }
         Group(stringResource(R.string.s_photos), 7) {
             ToggleRow(stringResource(R.string.s_smart_photos), stringResource(R.string.s_smart_photos_body), s.smartPhotos, vm::setSmartPhotos)
+            Spacer(Modifier.height(14.dp))
+            ToggleRow(stringResource(R.string.s_share_labels), stringResource(R.string.s_share_labels_body), s.shareLabels, vm::setShareLabels)
         }
         Group(stringResource(R.string.s_updates), 8) { UpdatesSection(vm, s.autoUpdates) }
         Group(stringResource(R.string.s_data), 9) {

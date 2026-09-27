@@ -42,8 +42,13 @@ class FoodApi(
         }
     }
 
-    /** Meal analysis takes a model several seconds per photo: it gets its own, longer deadline. */
-    private val mealClient by lazy { client.newBuilder().callTimeout(45, TimeUnit.SECONDS).build() }
+    /**
+     * Photo analysis uploads up to two photos and waits for a model (up to ~20 s on a slow connection): it gets its
+     * own, longer deadlines. OkHttp's default 10 s read timeout cut label reading off before the answer came.
+     */
+    private val mealClient by lazy {
+        client.newBuilder().callTimeout(75, TimeUnit.SECONDS).readTimeout(60, TimeUnit.SECONDS).writeTimeout(30, TimeUnit.SECONDS).build()
+    }
 
     /** Sends one downscaled JPEG to the Nufo meal analysis service; the photo is not stored there. */
     suspend fun analyzeMeal(jpeg: ByteArray): MealAnalysis = withContext(Dispatchers.IO) {
@@ -52,6 +57,19 @@ class FoodApi(
         mealClient.newCall(Request.Builder().url(MealParser.ENDPOINT).post(body).build()).execute().use { res ->
             if (!res.isSuccessful) throw ApiException("HTTP ${res.code}")
             MealParser.parse(Json.parseToJsonElement(res.body.string()).jsonObject)
+        }
+    }
+
+    /** Reads a photographed nutrition table (1-2 JPEGs); [share] lets the service add the values to Open Food Facts. */
+    suspend fun readLabel(jpegs: List<ByteArray>, barcode: String?, share: Boolean): LabelReading? = withContext(Dispatchers.IO) {
+        val body = buildJsonObject {
+            put("images", kotlinx.serialization.json.JsonArray(jpegs.map { kotlinx.serialization.json.JsonPrimitive(java.util.Base64.getEncoder().encodeToString(it)) }))
+            barcode?.let { put("barcode", it) }
+            put("share", share)
+        }.toString().toRequestBody("application/json".toMediaType())
+        mealClient.newCall(Request.Builder().url(LabelParser.ENDPOINT).post(body).build()).execute().use { res ->
+            if (!res.isSuccessful) throw ApiException("HTTP ${res.code}")
+            LabelParser.parse(Json.parseToJsonElement(res.body.string()).jsonObject)
         }
     }
 
