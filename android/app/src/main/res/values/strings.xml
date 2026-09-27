@@ -196,10 +196,10 @@
     <string name="footer_usda">Public-domain data from the U.S. Department of Agriculture.</string>
     <string name="disclaimer">Nufo provides nutrition information, not medical advice.</string>
     <string name="contains">Contains %1$s</string>
-    <string name="diet_not_vegan">Not vegan: declares animal-derived allergens.</string>
+    <string name="diet_not_vegan">Not vegan: contains milk, eggs, fish or seafood.</string>
     <string name="diet_not_vegetarian">Not vegetarian: contains fish or seafood.</string>
-    <string name="diet_note_keto">High in carbs for keto (%1$s g per 100 g).</string>
-    <string name="diet_note_low_sodium">Not low-sodium: %1$s g salt per 100 g.</string>
+    <string name="diet_note_keto">High in carbs (%1$s g per 100 g). On a keto diet you keep carbs under 10 g per 100 g.</string>
+    <string name="diet_note_low_sodium">Too salty for a low-salt diet: %1$s g per 100 g (low salt means 0.3 g or less).</string>
     <string name="share_score">Nufo Score %1$d/100</string>
     <string name="share_kcal">%1$d kcal per 100 g</string>
     <string name="usda_english">English-language data</string>
@@ -266,8 +266,8 @@
     <string name="diet_none">None</string>
     <string name="diet_vegetarian">Vegetarian</string>
     <string name="diet_vegan">Vegan</string>
-    <string name="diet_keto">Keto</string>
-    <string name="diet_low_sodium_name">Low-sodium</string>
+    <string name="diet_keto">Keto (low carb)</string>
+    <string name="diet_low_sodium_name">Low salt</string>
     <string name="s_allergens">Allergen warnings</string>
     <string name="s_allergens_note">Products that declare these get a warning banner.</string>
     <string name="s_sources">Data sources</string>

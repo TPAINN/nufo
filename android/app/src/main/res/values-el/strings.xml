@@ -175,10 +175,10 @@
     <string name="footer_usda">Δεδομένα δημόσιου τομέα από το Υπουργείο Γεωργίας των ΗΠΑ (USDA).</string>
     <string name="disclaimer">Το Nufo παρέχει διατροφικές πληροφορίες, όχι ιατρικές συμβουλές.</string>
     <string name="contains">Περιέχει: %1$s</string>
-    <string name="diet_not_vegan">Όχι vegan: δηλώνει αλλεργιογόνα ζωικής προέλευσης.</string>
-    <string name="diet_not_vegetarian">Όχι χορτοφαγικό: περιέχει ψάρι ή θαλασσινά.</string>
-    <string name="diet_note_keto">Πολλοί υδατάνθρακες για keto (%1$s g ανά 100 g).</string>
-    <string name="diet_note_low_sodium">Όχι χαμηλό σε νάτριο: %1$s g αλάτι ανά 100 g.</string>
+    <string name="diet_not_vegan">Δεν είναι vegan: περιέχει γάλα, αυγά, ψάρι ή θαλασσινά.</string>
+    <string name="diet_not_vegetarian">Δεν είναι για χορτοφάγους: περιέχει ψάρι ή θαλασσινά.</string>
+    <string name="diet_note_keto">Έχει πολλούς υδατάνθρακες (%1$s g στα 100 g). Στη δίαιτα keto τρώτε λιγότερους από 10 g στα 100 g.</string>
+    <string name="diet_note_low_sodium">Έχει πολύ αλάτι για δίαιτα χαμηλού αλατιού: %1$s g στα 100 g (λίγο αλάτι σημαίνει έως 0,3 g).</string>
     <string name="share_score">Βαθμός Nufo %1$d/100</string>
     <string name="share_kcal">%1$d kcal ανά 100 g</string>
     <string name="usda_english">Στοιχεία στα αγγλικά</string>
@@ -242,8 +242,8 @@
     <string name="diet_none">Καμία</string>
     <string name="diet_vegetarian">Χορτοφαγική</string>
     <string name="diet_vegan">Vegan</string>
-    <string name="diet_keto">Keto</string>
-    <string name="diet_low_sodium_name">Χαμηλό νάτριο</string>
+    <string name="diet_keto">Keto (λίγοι υδατάνθρακες)</string>
+    <string name="diet_low_sodium_name">Λίγο αλάτι</string>
     <string name="s_allergens">Προειδοποιήσεις αλλεργιογόνων</string>
     <string name="s_allergens_note">Όσα προϊόντα δηλώνουν κάποιο από αυτά εμφανίζουν προειδοποίηση.</string>
     <string name="s_sources">Πηγές δεδομένων</string>
