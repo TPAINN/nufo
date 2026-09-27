@@ -157,7 +157,7 @@ private fun UpdatePrompt(vm: NufoViewModel) {
         confirmButton = {
             androidx.compose.material3.TextButton({
                 vm.dismissUpdatePrompt()
-                context.startActivity(android.content.Intent(android.content.Intent.ACTION_VIEW, android.net.Uri.parse(update.url)))
+                runCatching { context.startActivity(android.content.Intent(android.content.Intent.ACTION_VIEW, android.net.Uri.parse(update.url))) }
             }) { Text(stringResource(R.string.s_update_download)) }
         },
         dismissButton = { androidx.compose.material3.TextButton(vm::dismissUpdatePrompt) { Text(stringResource(R.string.s_update_later)) } },

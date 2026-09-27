@@ -16,6 +16,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.unit.Dp
+import androidx.compose.ui.unit.dp
 import com.nufo.app.ui.theme.LocalReduceMotion
 import com.nufo.app.ui.theme.nufoSpring
 
@@ -58,7 +59,8 @@ fun Modifier.sharedPhoto(key: String, corners: PhotoCorners): Modifier {
     val other = placedPhotos[key]?.firstOrNull { it !== me }?.corners ?: corners
     val top by nav.transition.animateDp({ nufoSpring() }, label = "photo-top") { if (it == EnterExitState.Visible) corners.top else other.top }
     val bottom by nav.transition.animateDp({ nufoSpring() }, label = "photo-bottom") { if (it == EnterExitState.Visible) corners.bottom else other.bottom }
-    val shape = RoundedCornerShape(top, top, bottom, bottom)
+    // The spring overshoots a little; a corner below 0 is illegal (it crashed going back to a square-cornered card).
+    val shape = RoundedCornerShape(top.coerceAtLeast(0.dp), top.coerceAtLeast(0.dp), bottom.coerceAtLeast(0.dp), bottom.coerceAtLeast(0.dp))
     return with(shared) {
         this@sharedPhoto.sharedBounds(
             rememberSharedContentState(key), nav,

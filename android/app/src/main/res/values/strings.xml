@@ -317,6 +317,7 @@
     <string name="photo_no_food">I do not see food in this photo. Try another one, or type what it is.</string>
     <string name="footer_ai">Foods and amounts estimated by AI from your photo; nutrition from USDA FoodData Central where it matches, otherwise AI estimates. Check it against your plate.</string>
     <string name="recipe_subtitle_photo">Found in your photo, amounts for %1$s.</string>
+    <string name="photo_camera_denied">Nufo needs camera access to take the photo. You can allow it in the phone\'s settings, or pick one from the gallery.</string>
     <string name="s_data">Your data</string>
     <string name="s_clear">Clear history and cache</string>
     <string name="s_clear_title">Clear local data?</string>
