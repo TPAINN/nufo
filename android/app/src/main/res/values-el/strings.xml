@@ -188,7 +188,9 @@
     <string name="search_clear">Καθαρισμός αναζήτησης</string>
     <string name="filters_show">Εμφάνιση φίλτρων</string>
     <string name="filters_hide">Απόκρυψη φίλτρων</string>
-    <string name="search_hint">Αναζήτηση ταυτόχρονα σε Open Food Facts και USDA, στα ελληνικά ή στα αγγλικά.\nΔοκιμάστε «φέτα», «γιαούρτι» ή «ελαιόλαδο».</string>
+    <string name="search_hint">Αναζήτηση ταυτόχρονα σε Open Food Facts και USDA, στα ελληνικά, στα αγγλικά ή σε greeklish, ακόμα και με ορθογραφικά λάθη.\nΔοκιμάστε «κιμάς», «kotopoulo», «φαγε» ή «olive oil».</string>
+    <string name="search_top_answer">Καλύτερη αντιστοιχία</string>
+    <string name="search_showing_for">Αποτελέσματα για «%1$s»</string>
     <string name="search_none">Κανένα αποτέλεσμα για «%1$s».</string>
     <string name="search_none_filtered">Κανένα αποτέλεσμα για «%1$s» με αυτά τα φίλτρα.</string>
     <string name="search_error">Δεν ήταν δυνατή η σύνδεση με τις βάσεις δεδομένων. Ελέγξτε τη σύνδεσή σας.</string>
@@ -353,7 +355,7 @@
     <string name="prices_source">Από αποδείξεις και φωτογραφίες ραφιών χρηστών, μέσω Open Prices.</string>
     <string name="prices_none">Δεν υπάρχουν ακόμη αναφορές τιμών για αυτό το προϊόν.</string>
     <string name="prices_failed">Δεν ήταν δυνατή η φόρτωση των τιμών αυτή τη στιγμή.</string>
-    <string name="search_offline">Εκτός σύνδεσης: εμφανίζονται προϊόντα αποθηκευμένα στο κινητό σας.</string>
+    <string name="search_offline">Εκτός σύνδεσης: εμφανίζονται βασικά τρόφιμα και προϊόντα αποθηκευμένα στο κινητό σας.</string>
     <string name="search_offline_none">Είστε εκτός σύνδεσης και κανένα αποθηκευμένο προϊόν δεν ταιριάζει με «%1$s».</string>
     <string name="camera_error_title">Η κάμερα δεν ξεκίνησε</string>
     <string name="camera_error_body">Ίσως τη χρησιμοποιεί άλλη εφαρμογή. Μπορείτε να πληκτρολογήσετε το barcode.</string>    <string name="loading_step_off">Αναζήτηση στο Open Food Facts…</string>

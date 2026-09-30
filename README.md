@@ -48,10 +48,10 @@ Nutrition per 100 g comes from **USDA FoodData Central** whenever it agrees with
 |---|---|
 | **One honest score** | A 0 to 100 Nufo Score with every rule visible: Nutri-Score, NOVA processing, sugar, salt, saturated fat, protein, fibre. Tap "How is this calculated?" and see exactly why. |
 | **The official scales** | Nutri-Score A to E, NOVA 1 to 4 and Eco-Score, drawn like the badges on the pack, with the product's grade enlarged. |
-| **Built for Greece** | Greek UI, Greek search with or without accents ("γιαουρτι" works), and the ~6,200 products sold in Greece shown first with a GR mark. |
+| **Built for Greece** | Greek UI and a search that understands Greek, English and greeklish, typos included ("kotopoulo", "γιαουρτη", "chiken" all work), with the ~6,200 products sold in Greece shown first with a GR mark. |
 | **Real data only** | Every result shows its source, last update and completeness. Missing means missing: Nufo never invents a number. |
 | **Prices from real receipts** | Recent shelf prices from Open Prices, Greek stores first. |
-| **Works in the basement** | Everything you have scanned opens offline, with its photo. Search falls back to your saved products. |
+| **Works in the basement** | Everything you have scanned opens offline, with its photo. Search still finds plain foods (bundled USDA table) and your saved products. |
 | **No account, ever** | No sign-up, no email, no ads, no tracking. Your history stays on your phone. |
 
 <p align="center">
@@ -66,7 +66,7 @@ Nutrition per 100 g comes from **USDA FoodData Central** whenever it agrees with
 
 ## Get Nufo
 
-- **Android 8+**: download from **[nufo.vercel.app](https://nufo.vercel.app)** or the [latest release](https://github.com/TPAINN/nufo/releases/latest) (`nufo-1.0.6.apk`; `-32bit` for older phones). It updates itself: once a day it checks for a new version, downloads it inside the app (checksum-verified) and hands it to the Android installer. Your history stays.
+- **Android 8+**: download from **[nufo.vercel.app](https://nufo.vercel.app)** or the [latest release](https://github.com/TPAINN/nufo/releases/latest) (`nufo-1.0.7.apk`; `-32bit` for older phones). It updates itself: once a day it checks for a new version, downloads it inside the app (checksum-verified) and hands it to the Android installer. Your history stays.
 - **iPhone**: the SwiftUI app builds and passes its tests in CI; TestFlight follows once the Apple Developer account is set up.
 
 ## Data sources
@@ -88,9 +88,16 @@ The full technical write-up: how Greek search works, the scoring rules, offline 
   iOS via the system Settings app). Polite plural throughout, Greek number and date formats ("16,5 g").
 - **Greek products first.** Every search also runs against products Open Food Facts lists as sold in Greece
   (~6,200 today) and shows them first with a GR mark. A filter limits results to Greek products only.
-- **Greek search that actually matches.** Queries run as typed, without accents ("γιαουρτι"), and in English
-  via a 180-word Greek food dictionary ("φέτα" also finds "Feta cheese (P.D.O.)"). Whole-word matches rank
-  above stemmed ones, so "φέτα" doesn't lead with sliced cheese. OCR typos fall back to fuzzy brand matching.
+- **Search that understands what you mean** (`SmartSearch`). Greek, English and greeklish ("gala" → γάλα),
+  spelling mistakes ("γιαουρτη", "chiken"), and 35 brands in both scripts ("φαγε" finds FAGE). One query
+  becomes the texts worth sending (Greek, English, brand), then every answer from every source is scored
+  together: the food leading the name beats a dish containing it, a bare staple means what people expect
+  ("κοτόπουλο" → breast and fillet, not feet or skin; "κιμάς" → minced beef), and Greek products lead when
+  you type Greek. The answer that matches every word is shown on its own as the best match, completions
+  appear while typing, and results without a photo get a picture of the food. 52 unit tests.
+- **Plain foods without a quota.** The 5,431 USDA FNDDS foods ship inside the app, so "Bananas, raw" or
+  "Beef, ground" answer instantly and offline; the USDA API's shared `DEMO_KEY` allowed about ten
+  searches an hour.
 - **Greek names on products.** Product names and ingredients come in Greek when Open Food Facts has them;
   allergens, labels, categories and additives are translated through the Open Food Facts taxonomy, with a
   built-in fallback for the 14 EU allergens and common labels (ΠΟΠ, ΠΓΕ, Βιολογικό…).
@@ -134,7 +141,8 @@ branding/           App icon (SVG + 1024 px PNG) and the Tegaki "Nufo" handwriti
 | Source | Used for | Key |
 |---|---|---|
 | Open Food Facts (product API + Search-a-licious) | Barcodes, packaged products, Nutri-Score, NOVA, Eco-Score, ingredients, allergens | none |
-| USDA FoodData Central | Generic and branded foods, barcode fallback | free; falls back to `DEMO_KEY` |
+| USDA FoodData Central | Plain foods (FNDDS, bundled in the app); barcode fallback via the API | bundled: none; API falls back to `DEMO_KEY` |
+| Wikipedia (page summaries) | A picture of the food for results that have no photo | none |
 | Open Prices (by Open Food Facts) | Latest shopper-reported shelf prices, Greek stores first | none |
 | Nufo meal analysis (`nufo.vercel.app/api/analyze`, Gemini) | Every food in a meal photo, its grams, nutrition cross-checked with USDA FNDDS | server-side only |
 | UPCitemdb (free trial endpoint) | Last-resort identity (name, photo) for barcodes no food database has | none, ~100 lookups/day per IP |
@@ -175,7 +183,7 @@ Requirements: JDK 17+, Android SDK 36, an emulator or device.
 
 ```bash
 cd android
-./gradlew testDebugUnitTest            # 38 unit tests: scoring, parsers, meals, dishes, updates, Greek search
+./gradlew testDebugUnitTest            # 98 unit tests: smart search, scoring, parsers, meals, dishes, updates
 ./gradlew assembleDebug
 emulator -list-avds
 emulator -avd <your_avd> -dns-server 8.8.8.8
@@ -197,8 +205,8 @@ ANDROID_SERIAL=emulator-5554 ./gradlew installBenchmark            # release cod
 
 ### Release (Android)
 
-- Version 1.0.6 (versionCode 7). Download page: https://nufo.vercel.app. Builds are attached to the
-  GitHub release `v1.0.6`. The app checks the latest release once a day (toggle in Settings).
+- Version 1.0.7 (versionCode 8). Download page: https://nufo.vercel.app. Builds are attached to the
+  GitHub release `v1.0.7`. The app checks the latest release once a day (toggle in Settings).
 - Signing key: `~/.android/nufo-release.jks`, described by `~/.android/nufo-release.properties`
   (storeFile, storePassword, keyAlias, keyPassword), both outside the repo. Another location: set
   `NUFO_SIGNING` to the properties file. **Back both up**: without the key, no updates can be published.

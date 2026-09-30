@@ -210,7 +210,9 @@
     <string name="search_clear">Clear search</string>
     <string name="filters_show">Show filters</string>
     <string name="filters_hide">Hide filters</string>
-    <string name="search_hint">Search Open Food Facts and USDA at once, in Greek or English.\nTry «φέτα», «γιαούρτι» or «olive oil».</string>
+    <string name="search_hint">Search Open Food Facts and USDA at once, in Greek, English or greeklish (typos are fine).\nTry «κιμάς», «kotopoulo», «fage» or «olive oil».</string>
+    <string name="search_top_answer">Best match</string>
+    <string name="search_showing_for">Showing results for «%1$s»</string>
     <string name="search_none">No results for «%1$s».</string>
     <string name="search_none_filtered">No results for «%1$s» with these filters.</string>
     <string name="search_error">Couldn\'t reach the food databases. Check your connection.</string>
@@ -378,7 +380,7 @@
     <string name="prices_none">No price reports yet for this product.</string>
     <string name="prices_failed">Prices couldn\'t be loaded right now.</string>
     <string name="prices_where" translatable="false">%1$s · %2$s</string>
-    <string name="search_offline">Offline: showing products saved on this phone.</string>
+    <string name="search_offline">Offline: showing plain foods and products saved on this phone.</string>
     <string name="search_offline_none">You\'re offline and nothing saved matches «%1$s».</string>
     <string name="camera_error_title">The camera couldn\'t start</string>
     <string name="camera_error_body">Another app may be using it. You can still type the barcode.</string>    <string name="loading_step_off">Checking Open Food Facts…</string>

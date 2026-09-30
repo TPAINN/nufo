@@ -13,6 +13,7 @@ import com.nufo.app.data.PriceReport
 import com.nufo.app.data.Product
 import com.nufo.app.data.SearchFilters
 import com.nufo.app.data.SearchHit
+import com.nufo.app.data.SmartSearch
 import com.nufo.app.data.Settings
 import com.nufo.app.data.ThemeMode
 import com.nufo.app.data.Units
@@ -88,6 +89,12 @@ data class SearchState(
     val searched: Boolean = false,
     /** Results come from products saved on this phone because the databases were unreachable. */
     val offline: Boolean = false,
+    /** The answer that matches every word, shown on its own above the list. */
+    val top: SearchHit? = null,
+    /** What the query was understood as, when it differs from what was typed. */
+    val correction: String? = null,
+    /** Completions for what is being typed, from the food dictionary and known brands. */
+    val suggestions: List<String> = emptyList(),
 )
 
 /** EAN-8, UPC-A, EAN-13 or GTIN-14 typed by hand (a damaged barcode the camera cannot read), or null. */
@@ -278,9 +285,9 @@ class NufoViewModel(app: Application) : AndroidViewModel(app) {
     }
 
     fun setQuery(q: String) {
-        _search.update { it.copy(query = q) }
+        _search.update { it.copy(query = q, suggestions = if (typedBarcode(q) == null) SmartSearch.suggest(q) else emptyList()) }
         searchJob?.cancel()
-        if (q.isBlank() || typedBarcode(q) != null) { _search.update { it.copy(hits = emptyList(), loading = false, error = null, searched = false, offline = false) }; return }
+        if (q.isBlank() || typedBarcode(q) != null) { _search.update { it.copy(hits = emptyList(), top = null, correction = null, loading = false, error = null, searched = false, offline = false) }; return }
         searchJob = viewModelScope.launch {
             delay(450) // debounce typing; a Greek query fans out into several requests
             runSearch()
@@ -306,6 +313,7 @@ class NufoViewModel(app: Application) : AndroidViewModel(app) {
             it.copy(
                 loading = false, searched = true,
                 hits = outcome?.hits.orEmpty(), offline = outcome?.offline ?: false,
+                top = outcome?.top, correction = outcome?.correction,
                 error = r.exceptionOrNull()?.let { e -> e.message ?: e.javaClass.simpleName },
             )
         }

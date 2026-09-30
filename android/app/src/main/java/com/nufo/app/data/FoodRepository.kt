@@ -2,6 +2,7 @@ package com.nufo.app.data
 
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.async
+import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.withTimeout
 import kotlinx.coroutines.withTimeoutOrNull
 import kotlinx.coroutines.coroutineScope
@@ -23,10 +24,22 @@ enum class LookupStep { OpenFoodFacts, Usda, OtherDatabases }
 /** Longest a lookup or search may run before the user gets a saved copy or an error with Retry. */
 const val GIVE_UP_MS = 15_000L
 
-/** Search results; [offline] means they come from products saved on this phone, not the databases. */
-data class SearchOutcome(val hits: List<SearchHit>, val offline: Boolean = false)
+/**
+ * Search results, best first. [top] is the answer that matches every word of the query, [correction]
+ * what the query was understood as when that differs from what was typed («gala» → «γάλα»), and
+ * [offline] means they come from products saved on this phone, not the databases.
+ */
+data class SearchOutcome(
+    val hits: List<SearchHit>,
+    val offline: Boolean = false,
+    val top: SearchHit? = null,
+    val correction: String? = null,
+)
 
-class FoodRepository(private val api: FoodApi, private val dao: HistoryDao, private val cache: CacheDao, private val dishes: DishTable) {
+class FoodRepository(
+    private val api: FoodApi, private val dao: HistoryDao, private val cache: CacheDao,
+    private val dishes: DishTable, private val foods: FoodTable,
+) {
 
     /** Generic nutrition for a photographed dish, if the bundled table has it. */
     fun dish(key: String, name: String, lang: String): Product? = dishes.product(key, name, lang)
@@ -93,27 +106,52 @@ class FoodRepository(private val api: FoodApi, private val dao: HistoryDao, priv
     suspend fun product(hit: SearchHit, lang: String, onStep: (LookupStep) -> Unit = {}): Lookup =
         hit.product?.let { Lookup.Found(it) } ?: hit.barcode?.let { lookupBarcode(it, lang, onStep) } ?: Lookup.NotFound()
 
-    /** Searches both sources in parallel; a failing source never hides the other one's results. */
+    /**
+     * Understands the query, asks Open Food Facts and the bundled USDA table in parallel, then ranks
+     * all answers together. Offline, the table and the products saved on this phone still answer.
+     */
     suspend fun search(query: String, filters: SearchFilters, lang: String): Result<SearchOutcome> = coroutineScope {
-        val off = async { runCatching { withTimeout(GIVE_UP_MS) { api.offSearch(query, filters, lang) } } }
-        val usda = async { if (filters.needsOffTags) Result.success(emptyList()) else runCatching { withTimeout(GIVE_UP_MS) { api.usdaSearch(query) } } }
-        val results = listOf(off.await(), usda.await())
-        results.forEach { r -> r.exceptionOrNull()?.let { android.util.Log.w("Nufo", "Search source failed", it) } }
-        val hits = results.flatMap { it.getOrDefault(emptyList()) }.filter(filters::accepts)
-        when {
-            hits.isNotEmpty() || results.any { it.isSuccess } -> Result.success(SearchOutcome(hits))
-            results.all { it.exceptionOrNull() is IOException } -> Result.success(SearchOutcome(searchSaved(query), offline = true))
-            else -> Result.failure(results.first().exceptionOrNull()!!)
-        }
+        val q = SmartSearch.understand(query)
+        val off = async { runCatching { withTimeout(GIVE_UP_MS) { api.offSearch(q, filters, lang) } } }
+        // Plain foods come from the USDA table bundled in the app: instant, offline, no API quota.
+        val table = async(kotlinx.coroutines.Dispatchers.Default) { if (filters.needsOffTags) emptyList() else foods.search(q) }
+        val offResult = off.await()
+        offResult.exceptionOrNull()?.let { android.util.Log.w("Nufo", "Open Food Facts search failed", it) }
+        val offline = offResult.exceptionOrNull() is IOException
+        val hits = (offResult.getOrDefault(emptyList()) + table.await() + (if (offline) searchSaved(q) else emptyList()))
+            .filter(filters::accepts)
+        if (offResult.isFailure && !offline && hits.isEmpty()) return@coroutineScope Result.failure(offResult.exceptionOrNull()!!)
+        val ranked = SmartSearch.rank(hits, q)
+        val shown = if (offline) ranked.hits.take(40) else withPictures(ranked.hits.take(40), q)
+        val top = ranked.top?.let { t -> shown.firstOrNull { it.name == t.name && it.source == t.source && it.barcode == t.barcode } }
+        Result.success(SearchOutcome(shown, offline = offline, top = top, correction = q.correction))
     }
 
-    /** Offline search over products cached or saved on this phone, matching every word of the query. */
-    private suspend fun searchSaved(query: String): List<SearchHit> {
-        val words = GreekSearch.normalize(query).split(' ').filter { it.isNotBlank() }
+    /**
+     * Plain USDA foods have no photos; they get one of the food itself (bananas for "Bananas, raw"),
+     * fetched in parallel and never allowed to hold up the results for more than a couple of seconds.
+     */
+    private suspend fun withPictures(hits: List<SearchHit>, q: SmartSearch.Query): List<SearchHit> = coroutineScope {
+        hits.map { h ->
+            async {
+                val pic = SmartSearch.pictureSubject(h, q)?.let { withTimeoutOrNull(2_500) { api.foodPicture(it) } }
+                when {
+                    pic == null -> h
+                    // USDA foods are the food itself, so the picture is theirs on the product page too.
+                    h.source == UsdaParser.SOURCE -> h.copy(imageUrl = pic, product = h.product?.copy(imageUrl = h.product.imageUrl ?: pic))
+                    // A packaged product keeps an honest empty photo on its own page; the list only needs a cue.
+                    else -> h.copy(imageUrl = pic)
+                }
+            }
+        }.awaitAll()
+    }
+
+    /** Offline search over products cached or saved on this phone, matching any form of every query word. */
+    private suspend fun searchSaved(q: SmartSearch.Query): List<SearchHit> {
         val products = (dao.snapshot().map { it.json } + cache.recent().map { it.json }).mapNotNull(::decode).distinctBy { it.key }
         return products.filter { p ->
             val text = GreekSearch.normalize("${p.name} ${p.brand.orEmpty()}")
-            words.all { it in text }
+            q.terms.all { t -> t.forms.any { f -> SmartSearch.stem(f) in text } }
         }.map { p ->
             SearchHit(
                 name = p.name, brand = p.brand, imageUrl = p.imageUrl, nutriscoreGrade = p.nutriscoreGrade,
