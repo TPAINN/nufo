@@ -8,6 +8,7 @@ import coil3.network.okhttp.OkHttpNetworkFetcherFactory
 import com.nufo.app.data.DishTable
 import com.nufo.app.data.FoodApi
 import com.nufo.app.data.FoodRepository
+import com.nufo.app.data.FoodTable
 import com.nufo.app.data.NufoDatabase
 import com.nufo.app.data.SettingsStore
 import okhttp3.OkHttpClient
@@ -17,7 +18,10 @@ import kotlin.concurrent.thread
 /** Manual DI: one repository and one settings store for the whole process. */
 class NufoApp : Application(), SingletonImageLoader.Factory {
     private val db by lazy { NufoDatabase.create(this) }
-    val repository by lazy { FoodRepository(FoodApi(), db.history(), db.cache(), DishTable(this)) }
+    val repository by lazy { FoodRepository(
+        FoodApi(), db.history(), db.cache(), DishTable(this),
+        FoodTable { assets.open("food/fndds.json").bufferedReader().use { it.readText() } },
+    ) }
     val settings by lazy { SettingsStore(this) }
 
     override fun onCreate() {

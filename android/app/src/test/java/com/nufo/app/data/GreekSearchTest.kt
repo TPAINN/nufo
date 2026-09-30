@@ -30,10 +30,4 @@ class GreekSearchTest {
     @Test fun `does not translate when a Greek word is unknown`() {
         assertNull(GreekSearch.english("ΔΕΛΤΑ γάλα")) // brand names stay untranslated, so no English query
     }
-
-    @Test fun `variants cover typed, unaccented and English forms`() {
-        assertEquals(listOf("γιαούρτι", "γιαουρτι", "yogurt"), GreekSearch.variants("γιαούρτι"))
-        assertEquals(listOf("feta"), GreekSearch.variants("feta"))
-        assertEquals(listOf("ΔΕΛΤΑ γάλα", "ΔΕΛΤΑ γαλα"), GreekSearch.variants("ΔΕΛΤΑ  γάλα"))
-    }
 }

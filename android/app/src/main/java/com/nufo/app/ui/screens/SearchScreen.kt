@@ -13,6 +13,7 @@ import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.shrinkVertically
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -28,6 +29,8 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.LazyRow
+import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
@@ -67,6 +70,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.nufo.app.NufoViewModel
 import com.nufo.app.typedBarcode
 import androidx.compose.material3.OutlinedButton
+import androidx.compose.material3.SuggestionChip
 import com.nufo.app.ui.photoKey
 import com.nufo.app.R
 import com.nufo.app.ui.categoryLabel
@@ -116,6 +120,17 @@ fun SearchScreen(vm: NufoViewModel, onOpen: (SearchHit) -> Unit, onBarcode: (Str
                     BadgedBox(badge = { if (s.filters.isActive) Badge() }) {
                         Icon(Icons.Outlined.Tune, null, tint = if (showFilters || s.filters.isActive) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurface)
                     }
+                }
+            }
+        }
+        // Completions while typing: the dictionary word in the right script, or a known brand.
+        AnimatedVisibility(
+            s.suggestions.isNotEmpty() && typedBarcode == null,
+            enter = expandVertically(nufoSpring()) + fadeIn(Motion.fadeInSpec()), exit = shrinkVertically(nufoSpring()) + fadeOut(Motion.fadeOutSpec()),
+        ) {
+            LazyRow(contentPadding = PaddingValues(horizontal = 20.dp), horizontalArrangement = Arrangement.spacedBy(8.dp), modifier = Modifier.padding(top = 8.dp)) {
+                items(s.suggestions, key = { it }) { word ->
+                    SuggestionChip({ vm.setQuery(word); focus.clearFocus() }, { Text(word) }, Modifier.animateItem(), shape = RoundedCornerShape(12.dp))
                 }
             }
         }
@@ -172,8 +187,25 @@ fun SearchScreen(vm: NufoViewModel, onOpen: (SearchHit) -> Unit, onBarcode: (Str
                 if (s.offline) item(key = "offline") {
                     Text(stringResource(R.string.search_offline), style = MaterialTheme.typography.labelMedium, color = LocalNufoColors.current.textSecondary)
                 }
-                itemsIndexed(s.hits, key = { i, h -> "${h.source}:${h.barcode ?: h.name}:$i" }) { i, h ->
-                    HitRow(h, { onOpen(h) }, Modifier.animateItem().enterStagger(i))
+                s.correction?.let { c ->
+                    item(key = "correction") {
+                        Text(stringResource(R.string.search_showing_for, c), style = MaterialTheme.typography.labelLarge,
+                            color = LocalNufoColors.current.textSecondary, modifier = Modifier.animateItem())
+                    }
+                }
+                // The answer that matches every word gets its own place, above everything else.
+                s.top?.let { t ->
+                    item(key = "top:${t.source}:${t.barcode ?: t.name}") {
+                        Column(Modifier.animateItem().enterStagger(0)) {
+                            Text(stringResource(R.string.search_top_answer), style = MaterialTheme.typography.labelLarge,
+                                color = MaterialTheme.colorScheme.primary, modifier = Modifier.padding(start = 4.dp, bottom = 6.dp))
+                            HitRow(t, { onOpen(t) }, Modifier.border(2.dp, MaterialTheme.colorScheme.primary, RoundedCornerShape(22.dp)))
+                        }
+                    }
+                }
+                val rest = if (s.top == null) s.hits else s.hits.filterNot { it === s.top }
+                itemsIndexed(rest, key = { i, h -> "${h.source}:${h.barcode ?: h.name}:$i" }) { i, h ->
+                    HitRow(h, { onOpen(h) }, Modifier.animateItem().enterStagger(i + 1))
                 }
             }
         }

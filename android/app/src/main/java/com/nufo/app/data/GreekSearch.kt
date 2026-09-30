@@ -3,11 +3,9 @@ package com.nufo.app.data
 import java.text.Normalizer
 
 /**
- * Makes Greek searches work against databases that are mostly English and accent-sensitive.
- *
- * Open Food Facts matches "γιαούρτι" and "γιαουρτι" as different words, and many Greek products are
- * catalogued under English names ("Feta cheese (P.D.O.)"), so one query is expanded into a few
- * variants: as typed, without accents, and translated to English when every Greek word is known.
+ * Greek text helpers and the Greek to English food dictionary behind [SmartSearch]. Open Food Facts
+ * matches "γιαούρτι" and "γιαουρτι" as different words, and many Greek products are catalogued
+ * under English names ("Feta cheese (P.D.O.)").
  */
 object GreekSearch {
     /** Lowercase, accents removed, final sigma unified: "Γιαούρτι" -> "γιαουρτι". */
@@ -15,13 +13,6 @@ object GreekSearch {
         Normalizer.normalize(s.lowercase(), Normalizer.Form.NFD).replace(Regex("\\p{M}+"), "").replace('ς', 'σ').trim()
 
     fun hasGreek(s: String) = s.any { it in '\u0370'..'\u03FF' || it in '\u1F00'..'\u1FFF' }
-
-    /** Distinct query variants to run, most specific first. */
-    fun variants(query: String): List<String> {
-        val typed = query.trim().replace(Regex("\\s+"), " ")
-        if (!hasGreek(typed)) return listOf(typed)
-        return listOfNotNull(typed, stripAccents(typed), english(typed)).distinctBy { it.lowercase() }
-    }
 
     fun stripAccents(s: String): String =
         Normalizer.normalize(s, Normalizer.Form.NFD).replace(Regex("\\p{M}+"), "")
@@ -36,7 +27,8 @@ object GreekSearch {
     }
 
     // canonical Greek -> English. Keys are normalized once at load time.
-    private val raw = listOf(
+    /** The dictionary itself, accented Greek to English, for the smarter matching in [SmartSearch]. */
+    internal val raw = listOf(
         // dairy & eggs
         "γάλα" to "milk", "γιαούρτι" to "yogurt", "στραγγιστό" to "strained", "φέτα" to "feta", "τυρί" to "cheese",
         "κασέρι" to "kasseri", "γραβιέρα" to "graviera", "κεφαλοτύρι" to "kefalotyri", "μυζήθρα" to "mizithra",
@@ -75,7 +67,7 @@ object GreekSearch {
         "αμύγδαλα" to "almonds", "καρύδια" to "walnuts", "φιστίκια" to "pistachios", "φουντούκια" to "hazelnuts", "ξηροί καρποί" to "nuts",
         // meat & fish
         "κοτόπουλο" to "chicken", "κρέας" to "meat", "μοσχάρι" to "beef", "χοιρινό" to "pork", "αρνί" to "lamb",
-        "κιμάς" to "minced meat", "λουκάνικο" to "sausage", "λουκάνικα" to "sausages", "μπέικον" to "bacon", "ζαμπόν" to "ham",
+        "κιμάς" to "ground beef", "λουκάνικο" to "sausage", "λουκάνικα" to "sausages", "μπέικον" to "bacon", "ζαμπόν" to "ham",
         "γαλοπούλα" to "turkey", "σαλάμι" to "salami", "ψάρι" to "fish", "τόνος" to "tuna", "σολομός" to "salmon",
         "σαρδέλες" to "sardines", "γαύρος" to "anchovies", "καλαμάρι" to "squid", "χταπόδι" to "octopus", "γαρίδες" to "shrimp",
         "μύδια" to "mussels", "μπακαλιάρος" to "cod",

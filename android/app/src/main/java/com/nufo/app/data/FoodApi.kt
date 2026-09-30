@@ -9,6 +9,7 @@ import kotlinx.coroutines.withContext
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.jsonObject
+import kotlinx.serialization.json.jsonPrimitive
 import okhttp3.HttpUrl.Companion.toHttpUrl
 import okhttp3.MediaType.Companion.toMediaType
 import okhttp3.RequestBody.Companion.toRequestBody
@@ -94,36 +95,39 @@ class FoodApi(
     }
 
     /**
-     * Search-a-licious (OFF's current search API). Search-a-licious has no free-text OR, so each
-     * Greek variant (as typed, without accents, English) runs as its own query restricted to
-     * products sold in Greece, alongside one worldwide query. Greek products are listed first.
-     * User text is stripped of Lucene syntax (a stray ":" makes the server return 500).
+     * Search-a-licious (OFF's current search API). It has no free-text OR, so each text
+     * [SmartSearch.understand] produced (as typed, Greek, English, the brand in both scripts) runs
+     * as its own query restricted to products sold in Greece, alongside one worldwide query.
+     * Ranking is not done here: [SmartSearch.rank] orders these together with USDA's answers.
      * With zero hits, retries with fuzzy brand matching, which rescues OCR typos like "nutelld".
      */
-    suspend fun offSearch(query: String, filters: SearchFilters, lang: String): List<SearchHit> = coroutineScope {
-        val clean = query.replace(Regex("""[+\-&|!(){}\[\]^"~*?:\\/]"""), " ").trim().replace(Regex("\\s+"), " ")
-        if (clean.isEmpty()) return@coroutineScope emptyList()
+    suspend fun offSearch(q: SmartSearch.Query, filters: SearchFilters, lang: String): List<SearchHit> = coroutineScope {
+        if (q.offQueries.isEmpty()) return@coroutineScope emptyList()
         val greek = filters.copy(greekOnly = true)
-        val calls = GreekSearch.variants(clean).map { v -> async { runCatching { offQuery(v, greek, lang) } } } +
-            (if (filters.greekOnly) emptyList() else listOf(async { runCatching { offQuery(clean, filters, lang) } }))
+        val calls = q.offQueries.map { v -> async { runCatching { offQuery(v, greek, lang) } } } +
+            (if (filters.greekOnly) emptyList() else listOf(async { runCatching { offQuery(q.offQueries.first(), filters, lang) } }))
         val results = calls.awaitAll()
         if (results.all { it.isFailure }) throw results.first().exceptionOrNull()!!
-        val wanted = GreekSearch.variants(clean).map { GreekSearch.normalize(it).split(' ') }
-        // Search-a-licious stems words ("φέτες" matches "φέτα"), so exact whole-word matches go first.
-        fun exact(h: SearchHit): Boolean {
-            val words = GreekSearch.normalize(h.name).split(Regex("[^\\p{L}\\p{N}%]+")).toSet()
-            return wanted.any { v -> v.all { it in words } }
-        }
-        val merged = results.flatMap { it.getOrDefault(emptyList()) }
-            .distinctBy { it.barcode ?: it.name }
-            .sortedWith(
-                compareByDescending<SearchHit> { it.soldInGreece }.thenByDescending(::exact)
-                    // Then entries a shopper can trust at a glance: photo, calories and grade present.
-                    .thenByDescending { listOf(it.imageUrl, it.caloriesPer100g, it.nutriscoreGrade).count { f -> f != null } },
-            ) // stable within groups
-        if (merged.isNotEmpty()) return@coroutineScope merged.take(40)
-        val words = GreekSearch.stripAccents(clean).split(' ').filter { it.length >= 3 }
+        val merged = results.flatMap { it.getOrDefault(emptyList()) }.distinctBy { it.barcode ?: it.name }
+        if (merged.isNotEmpty()) return@coroutineScope merged
+        val words = GreekSearch.stripAccents(q.raw).split(' ').filter { it.length >= 3 }
         if (words.isEmpty()) emptyList() else offQuery(words.joinToString(" OR ", "(", ")") { "brands:$it~2" }, filters, lang)
+    }
+
+    private val pictures = java.util.concurrent.ConcurrentHashMap<String, String>()
+
+    /**
+     * A photo of a plain food, from Wikipedia, for USDA entries that have none. Cached for the session;
+     * a miss is cached too (as ""), so a food without a page is not asked for again.
+     */
+    suspend fun foodPicture(subject: String): String? {
+        pictures[subject]?.let { return it.ifEmpty { null } }
+        val url = "https://en.wikipedia.org/api/rest_v1/page/summary/" + java.net.URLEncoder.encode(subject.replace(' ', '_'), "UTF-8")
+        val found = runCatching {
+            get(url)["thumbnail"]?.jsonObject?.get("source")?.jsonPrimitive?.content
+        }.getOrNull()
+        pictures[subject] = found.orEmpty()
+        return found
     }
 
     private suspend fun offQuery(q: String, filters: SearchFilters, lang: String): List<SearchHit> {
