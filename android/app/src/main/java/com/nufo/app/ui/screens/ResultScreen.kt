@@ -88,6 +88,12 @@ import androidx.compose.material3.Slider
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.snapshotFlow
+import kotlinx.coroutines.flow.first
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.EnterExitState
+import androidx.compose.animation.ExitTransition
+import com.nufo.app.ui.LocalNavScope
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableStateOf
@@ -180,6 +186,11 @@ fun ResultScreen(vm: NufoViewModel, onBack: () -> Unit, onSearch: (String) -> Un
     val savedMsg = stringResource(R.string.saved_to_history)
     val removedFmt = stringResource(R.string.history_removed)
     val undo = stringResource(R.string.undo)
+    val activity = context as? android.app.Activity
+    // Leaving the screen (not just rotating it) means nothing should reopen after process death.
+    androidx.compose.runtime.DisposableEffect(Unit) {
+        onDispose { if (activity?.isChangingConfigurations != true) vm.forgetOpen() }
+    }
     Box(Modifier.fillMaxSize()) {
     Column(Modifier.fillMaxSize().background(MaterialTheme.colorScheme.background).statusBarsPadding()) {
         Row(Modifier.fillMaxWidth().padding(horizontal = 8.dp, vertical = 4.dp), verticalAlignment = Alignment.CenterVertically) {
@@ -232,6 +243,7 @@ fun ResultScreen(vm: NufoViewModel, onBack: () -> Unit, onSearch: (String) -> Un
                 ) {
                     Button(s.retry, shape = RoundedCornerShape(16.dp)) { Text(stringResource(R.string.retry)) }
                 }
+                ResultState.Gone -> LaunchedEffect(Unit) { onBack() }
                 is ResultState.Loaded -> ProductDetail(
                     s.product, s.cachedAt, vm, settings?.units ?: Units.Metric, settings?.diet ?: Diet.None, settings?.allergenAlerts.orEmpty(),
                 )
@@ -383,6 +395,13 @@ private fun ProductDetail(p: Product, cachedAt: Long?, vm: NufoViewModel, units:
         portion == Portion.Serving && p.servingGrams == null -> p.nutritionPerServing ?: p.nutritionPer100g
         else -> p.nutritionPer100g.scaled((grams ?: 100.0) / 100)
     }
+    val navScope = LocalNavScope.current
+    var settled by rememberSaveable(p.key) { mutableStateOf(navScope == null) }
+    LaunchedEffect(navScope, p.key) {
+        val transition = navScope?.transition ?: return@LaunchedEffect run { settled = true }
+        snapshotFlow { transition.currentState == EnterExitState.Visible && transition.targetState == EnterExitState.Visible }.first { it }
+        settled = true
+    }
     val portionText = when (portion) {
         Portion.Serving -> p.servingSize ?: grams?.let { weightLabel(it, units) } ?: stringResource(R.string.one_serving)
         else -> weightLabel(grams ?: 100.0, units)
@@ -464,6 +483,10 @@ private fun ProductDetail(p: Product, cachedAt: Long?, vm: NufoViewModel, units:
         Spacer(Modifier.height(16.dp))
         ScoreCard(p, onMethod = { method = true }, modifier = Modifier.padding(horizontal = 20.dp).enterStagger(4))
 
+        // The sections below the fold are built once the open transition has settled. Built in its
+        // first frame they cost a ~48 ms frame on every open (emulator, 2026-10-07), a visible stutter.
+        AnimatedVisibility(settled, enter = fadeIn(Motion.fadeInSpec()), exit = ExitTransition.None) {
+        Column {
         Spacer(Modifier.height(22.dp))
         SectionTitle(stringResource(R.string.portion), Modifier.padding(horizontal = 20.dp))
         Row(
@@ -557,6 +580,8 @@ private fun ProductDetail(p: Product, cachedAt: Long?, vm: NufoViewModel, units:
             )
             Spacer(Modifier.height(6.dp))
             Text(stringResource(R.string.disclaimer), style = MaterialTheme.typography.labelMedium, color = LocalNufoColors.current.textSecondary)
+        }
+        }
         }
     }
     if (method) MethodologySheet { method = false }

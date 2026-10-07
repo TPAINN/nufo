@@ -66,7 +66,7 @@ Nutrition per 100 g comes from **USDA FoodData Central** whenever it agrees with
 
 ## Get Nufo
 
-- **Android 8+**: download from **[nufo.vercel.app](https://nufo.vercel.app)** or the [latest release](https://github.com/TPAINN/nufo/releases/latest) (`nufo-1.0.7.apk`; `-32bit` for older phones). It updates itself: once a day it checks for a new version, downloads it inside the app (checksum-verified) and hands it to the Android installer. Your history stays.
+- **Android 8+**: download from **[nufo.vercel.app](https://nufo.vercel.app)** or the [latest release](https://github.com/TPAINN/nufo/releases/latest) (`nufo-1.0.8.apk`; `-32bit` for older phones). It updates itself: once a day it checks for a new version, downloads it inside the app (checksum-verified) and hands it to the Android installer. Your history stays.
 - **iPhone**: the SwiftUI app builds and passes its tests in CI; TestFlight follows once the Apple Developer account is set up.
 
 ## Data sources
@@ -205,8 +205,8 @@ ANDROID_SERIAL=emulator-5554 ./gradlew installBenchmark            # release cod
 
 ### Release (Android)
 
-- Version 1.0.7 (versionCode 8). Download page: https://nufo.vercel.app. Builds are attached to the
-  GitHub release `v1.0.7`. The app checks the latest release once a day (toggle in Settings).
+- Version 1.0.8 (versionCode 9). Download page: https://nufo.vercel.app. Builds are attached to the
+  GitHub release `v1.0.8`. The app checks the latest release once a day (toggle in Settings).
 - Signing key: `~/.android/nufo-release.jks`, described by `~/.android/nufo-release.properties`
   (storeFile, storePassword, keyAlias, keyPassword), both outside the repo. Another location: set
   `NUFO_SIGNING` to the properties file. **Back both up**: without the key, no updates can be published.
