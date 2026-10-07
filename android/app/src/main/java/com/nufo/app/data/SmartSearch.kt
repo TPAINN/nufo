@@ -413,8 +413,11 @@ object SmartSearch {
 
     // ---------- suggestions ----------
 
-    private val suggestionPool: List<String> by lazy {
-        (pairs.map { it.first } + BRANDS.map { it.display }).distinct()
+    private class PoolWord(val word: String, val norm: String, val phon: String)
+
+    // Keys are worked out once: suggest() runs on every keystroke, on the main thread.
+    private val suggestionPool: List<PoolWord> by lazy {
+        (pairs.map { it.first } + BRANDS.map { it.display }).distinct().map { PoolWord(it, normalize(it), phonetic(it)) }
     }
 
     /**
@@ -430,12 +433,12 @@ object SmartSearch {
             greekByEnglish.keys.filter { it.startsWith(lp) }.sortedBy { it.length }.forEach { out += it; out += greekByEnglish.getValue(it) }
             BRANDS.filter { b -> b.aliases.any { it.startsWith(lp) } }.forEach { out += it.display }
             val gp = phonetic(greeklish(lp))
-            suggestionPool.filter { phonetic(it).startsWith(gp) }.sortedBy { it.length }.forEach { out += it }
+            suggestionPool.filter { it.phon.startsWith(gp) }.map { it.word }.sortedBy { it.length }.forEach { out += it }
         } else {
             // Plain and phonetic: «γιαο» is half of «ου», which the phonetic key has already merged.
             val np = phonetic(p)
             val nn = normalize(p)
-            suggestionPool.filter { normalize(it).startsWith(nn) || phonetic(it).startsWith(np) }.sortedBy { it.length }.forEach { out += it }
+            suggestionPool.filter { it.norm.startsWith(nn) || it.phon.startsWith(np) }.map { it.word }.sortedBy { it.length }.forEach { out += it }
         }
         return out.filter { normalize(it) != normalize(p) }.take(limit)
     }

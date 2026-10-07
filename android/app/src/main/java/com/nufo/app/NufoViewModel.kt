@@ -2,6 +2,7 @@ package com.nufo.app
 
 import android.app.Application
 import androidx.lifecycle.AndroidViewModel
+import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.viewModelScope
 import com.nufo.app.BuildConfig
 import com.nufo.app.data.AppUpdate
@@ -45,6 +46,8 @@ sealed interface ResultState {
     data class Loaded(val product: Product, val cachedAt: Long? = null) : ResultState
     data class NotFound(val barcode: String?, val identified: Identified? = null) : ResultState
     data class Error(val offline: Boolean, val retry: () -> Unit) : ResultState
+    /** Restored after the process was killed with nothing that can be reopened: the screen closes itself. */
+    data object Gone : ResultState
 }
 
 sealed interface PricesState {
@@ -108,7 +111,7 @@ private fun android.graphics.Bitmap.toJpeg(maxSide: Int, quality: Int): ByteArra
     return java.io.ByteArrayOutputStream().also { small.compress(android.graphics.Bitmap.CompressFormat.JPEG, quality, it) }.toByteArray()
 }
 
-class NufoViewModel(app: Application) : AndroidViewModel(app) {
+class NufoViewModel(app: Application, private val saved: SavedStateHandle) : AndroidViewModel(app) {
     private val repo = (app as NufoApp).repository
     private val store = (app as NufoApp).settings
 
@@ -145,7 +148,36 @@ class NufoViewModel(app: Application) : AndroidViewModel(app) {
     val install = _install.asStateFlow()
     private var installJob: Job? = null
 
+    /**
+     * What the result screen shows, kept across process death. Android restores the open screen on its own,
+     * but a fresh ViewModel used to leave it on a loading skeleton forever.
+     */
+    private fun rememberOpen(key: String?, barcode: String?) {
+        saved[OPEN_MARK] = true
+        saved[OPEN_KEY] = key
+        saved[OPEN_BARCODE] = barcode
+    }
+
+    /** The result screen was left: nothing to reopen if the process dies later. */
+    fun forgetOpen() { saved[OPEN_MARK] = false }
+
+    private fun restoreOpen() {
+        if (saved.get<Boolean>(OPEN_MARK) != true) return
+        val key = saved.get<String>(OPEN_KEY)
+        val barcode = saved.get<String>(OPEN_BARCODE)
+        viewModelScope.launch {
+            val product = key?.let { k -> repo.history.first().firstOrNull { it.key == k } }
+            if (_result.value !is ResultState.Loading) return@launch // something was opened meanwhile
+            when {
+                product != null -> openProduct(product)
+                barcode != null -> openBarcode(barcode)
+                else -> _result.value = ResultState.Gone
+            }
+        }
+    }
+
     init {
+        restoreOpen()
         viewModelScope.launch(Dispatchers.IO) { installer.cleanUp() }
         // At most one automatic check per day, on opening; a failure (offline) is retried at the next opening.
         viewModelScope.launch {
@@ -168,6 +200,7 @@ class NufoViewModel(app: Application) : AndroidViewModel(app) {
     private fun show(lookup: Lookup, barcode: String?, retry: () -> Unit) {
         _result.value = when (lookup) {
             is Lookup.Found -> {
+                rememberOpen(lookup.product.key, lookup.product.barcode)
                 viewModelScope.launch { repo.save(lookup.product) }
                 loadPrices(lookup.product)
                 ResultState.Loaded(lookup.product, lookup.cachedAt)
@@ -178,12 +211,14 @@ class NufoViewModel(app: Application) : AndroidViewModel(app) {
     }
 
     fun openBarcode(barcode: String) {
+        rememberOpen(null, barcode)
         resetLabel()
         _result.value = ResultState.Loading()
         viewModelScope.launch { show(repo.lookupBarcode(barcode, dataLang(), ::onStep), barcode) { openBarcode(barcode) } }
     }
 
     fun openHit(hit: SearchHit) {
+        rememberOpen(null, hit.barcode)
         resetLabel()
         _result.value = ResultState.Loading(hit)
         viewModelScope.launch { show(repo.product(hit, dataLang(), ::onStep), hit.barcode) { openHit(hit) } }
@@ -270,6 +305,7 @@ class NufoViewModel(app: Application) : AndroidViewModel(app) {
     }.getOrNull()
 
     fun openProduct(p: Product) {
+        rememberOpen(p.key, p.barcode)
         resetLabel()
         _result.value = ResultState.Loaded(p)
         loadPrices(p)
@@ -377,3 +413,7 @@ class NufoViewModel(app: Application) : AndroidViewModel(app) {
     fun setDiet(d: Diet) = viewModelScope.launch { store.setDiet(d) }
     fun toggleAllergen(tag: String) = viewModelScope.launch { store.toggleAllergen(tag) }
 }
+
+private const val OPEN_MARK = "result_open"
+private const val OPEN_KEY = "result_key"
+private const val OPEN_BARCODE = "result_barcode"
