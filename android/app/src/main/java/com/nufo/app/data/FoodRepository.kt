@@ -1,5 +1,6 @@
 package com.nufo.app.data
 
+import kotlinx.coroutines.withContext
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
@@ -110,7 +111,9 @@ class FoodRepository(
      * Understands the query, asks Open Food Facts and the bundled USDA table in parallel, then ranks
      * all answers together. Offline, the table and the products saved on this phone still answer.
      */
-    suspend fun search(query: String, filters: SearchFilters, lang: String): Result<SearchOutcome> = coroutineScope {
+    // Off the main thread: ranking every answer with phonetic keys cost several slow UI frames
+    // right as results arrived (emulator gfxinfo, 2026-10-07).
+    suspend fun search(query: String, filters: SearchFilters, lang: String): Result<SearchOutcome> = withContext(kotlinx.coroutines.Dispatchers.Default) {
         val q = SmartSearch.understand(query)
         val off = async { runCatching { withTimeout(GIVE_UP_MS) { api.offSearch(q, filters, lang) } } }
         // Plain foods come from the USDA table bundled in the app: instant, offline, no API quota.
@@ -120,7 +123,7 @@ class FoodRepository(
         val offline = offResult.exceptionOrNull() is IOException
         val hits = (offResult.getOrDefault(emptyList()) + table.await() + (if (offline) searchSaved(q) else emptyList()))
             .filter(filters::accepts)
-        if (offResult.isFailure && !offline && hits.isEmpty()) return@coroutineScope Result.failure(offResult.exceptionOrNull()!!)
+        if (offResult.isFailure && !offline && hits.isEmpty()) return@withContext Result.failure(offResult.exceptionOrNull()!!)
         val ranked = SmartSearch.rank(hits, q)
         val shown = if (offline) ranked.hits.take(40) else withPictures(ranked.hits.take(40), q)
         val top = ranked.top?.let { t -> shown.firstOrNull { it.name == t.name && it.source == t.source && it.barcode == t.barcode } }
