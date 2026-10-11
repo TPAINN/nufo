@@ -161,7 +161,7 @@ Facts plus USDA already cover barcodes, packaged foods and generic foods with no
   an "offline copy from <date>" note, search falls back to saved products, and a banner says so. Coming back
   online refreshes offline results automatically.
 - **Four states on every screen:** loading (skeletons shaped like the content, plus the tapped product's photo
-  and name immediately), success, empty (with a next step), and error — which says whether *you* are offline
+  and name immediately), success, empty (with a next step), and error - which says whether *you* are offline
   or the *database* is down, with Retry. Unknown barcodes show what UPCitemdb knows about them, if anything.
 - **Waiting is designed too** (`Wait.kt`, `Wait` in `Components.swift`): nothing for the first 0.4 s so fast
   answers never flash a loader; skeletons for whole screens, a thin bar only when refreshing results already
@@ -251,18 +251,18 @@ xcrun simctl launch booted com.nufo.app
   strong ease-out and one ease-in-out curve, one spring for movement, 45 ms stagger. Forward navigation slides
   in from the right and back is its exact mirror; peers (tabs, welcome to home) fade through; content swapping
   in place crossfades. Entrances play the first time a screen appears, not on every return.
-- **Opening animation** — starts from the exact launcher icon (no second pop), then one 700 ms beat: the
+- **Opening animation** - starts from the exact launcher icon (no second pop), then one 700 ms beat: the
   scanner corners focus, a scan line sweeps, the leaf pulses. The icon then leaves small and fast, and the
   first screen rises in *after* the hand-off instead of invisibly underneath it.
-- **Opening and closing products** — the tapped product's photo flies into the product page and back
+- **Opening and closing products** - the tapped product's photo flies into the product page and back
   (Compose shared elements; iOS 18 zoom navigation transition). Android supports predictive back.
-- **Welcome animation** — Nufo's handwritten logo comes from [Tegaki](https://github.com/gkurt/tegaki)
+- **Welcome animation** - Nufo's handwritten logo comes from [Tegaki](https://github.com/gkurt/tegaki)
   (`npx tegaki "Nufo" --font caveat --mode once`). Tegaki is a web library, so the exported pen strokes,
   timings and easing curve are replayed natively (`TegakiLogo.kt`, `TegakiLogo.swift`).
   The welcome screen runs on one clock: the glow blooms, the signature writes, and the three features rise in
   while it writes (each icon acts out its point once: a scan sweep, a confirming pulse, a lock swinging shut).
   The button is ready at about 1.1 s. Switching language does not replay the intro.
-- **Text and number transitions** — [Calligraph](https://calligraph.raphaelsalaja.com/) is a React/Motion
+- **Text and number transitions** - [Calligraph](https://calligraph.raphaelsalaja.com/) is a React/Motion
   library, so its effects are ported natively: per-character staggered entrances and rolling digit slots
   (`Calligraph.kt`, `Calligraph.swift`, which uses SwiftUI's `numericText`).
 - One spring drives screen transitions, cards, chips, tabs and the score ring. Pressed cards sink slightly
