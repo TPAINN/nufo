@@ -15,3 +15,15 @@ ios/DerivedData/
 nufo-release.properties
 ios/xcodebuild.log
 __pycache__/
+
+# secrets and credentials: never commit
+.env.*
+!.env.example
+!.env.sample
+*.pem
+*.key
+*.p12
+*.pfx
+service-account*.json
+*.kdbx
+.npmrc
