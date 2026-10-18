@@ -9,7 +9,6 @@ android/.idea/
 ios/Nufo.xcodeproj/
 ios/build/
 ios/DerivedData/
-.claude/
 *.jks
 *.keystore
 nufo-release.properties
