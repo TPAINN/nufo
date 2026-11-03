@@ -35,9 +35,11 @@ val GradeB = Color(0xFF4CAF50)
 val GradeC = Color(0xFFFFC107)
 val GradeD = Color(0xFFFF9800)
 val GradeE = Color(0xFFF44336)
+/** Green-Score F only (darker than E). */
+val GradeF = Color(0xFFB3261E)
 
 fun gradeColor(grade: String?) = when (grade?.lowercase()) {
-    "a" -> GradeA; "b" -> GradeB; "c" -> GradeC; "d" -> GradeD; "e" -> GradeE
+    "a+", "a" -> GradeA; "b" -> GradeB; "c" -> GradeC; "d" -> GradeD; "e" -> GradeE; "f" -> GradeF
     else -> Color(0xFF9CA3AF)
 }
 

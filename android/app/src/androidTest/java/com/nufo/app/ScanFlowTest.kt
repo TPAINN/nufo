@@ -50,11 +50,13 @@ class ScanFlowTest {
         rule.onNodeWithText(s(R.string.scan_lookup)).performClick()
 
         // Result screen: name, official grades and the source footer come from Open Food Facts.
-        waitFor(s(R.string.why_score))
+        waitFor(s(R.string.nufo_score))
         rule.onNodeWithContentDescription("Nutella", substring = true).assertExists() // Calligraph title exposes its text as a description
-        // Scale descriptions read "Nutri-Score E. <explanation>"; a missing Eco-Score is announced by title only.
-        rule.onNodeWithContentDescription("Nutri-Score E", substring = true).assertExists()
-        rule.onNodeWithContentDescription("NOVA 4", substring = true).assertExists()
+        // The grade scales are announced by title (with the grade when published). Open Food Facts edits its data, so
+        // the test checks the structure, not today's grades (Nutella went from Nutri-Score E / NOVA 4 to unknown / NOVA 3).
+        // Every scale names itself to TalkBack, with its grade or "not available".
+        rule.onNodeWithContentDescription("Nutri-Score", substring = true).assertExists()
+        rule.onNodeWithContentDescription("NOVA", substring = true).assertExists()
 
         rule.onNodeWithContentDescription(s(R.string.back)).performClick()
         waitFor(s(R.string.nav_history))

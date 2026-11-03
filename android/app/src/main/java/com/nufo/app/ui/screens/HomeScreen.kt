@@ -1,5 +1,9 @@
 package com.nufo.app.ui.screens
 
+import com.nufo.app.ui.theme.Motion
+import androidx.compose.animation.togetherWith
+import androidx.compose.animation.SizeTransform
+import androidx.compose.animation.AnimatedContent
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -109,25 +113,33 @@ fun HomeScreen(
         SectionTitle(stringResource(R.string.home_recent), Modifier.padding(horizontal = 20.dp).enterStagger(4))
         Spacer(Modifier.height(12.dp))
         val recent = history
-        if (recent == null) {
-            RecentSkeleton(Modifier.enterStagger(5))
-        } else if (recent.isEmpty()) {
-            NufoCard(Modifier.padding(horizontal = 20.dp).fillMaxWidth().enterStagger(4)) {
-                Row(Modifier.padding(18.dp), verticalAlignment = Alignment.CenterVertically) {
-                    Box(Modifier.size(44.dp).clip(CircleShape).background(MaterialTheme.colorScheme.primaryContainer), contentAlignment = Alignment.Center) {
-                        Icon(Icons.Outlined.Restaurant, null, tint = MaterialTheme.colorScheme.primary)
-                    }
-                    Spacer(Modifier.width(14.dp))
-                    Column {
-                        Text(stringResource(R.string.home_empty_title), style = MaterialTheme.typography.titleMedium)
-                        Text(stringResource(R.string.home_empty_body), style = MaterialTheme.typography.bodyMedium, color = LocalNufoColors.current.textSecondary)
+        // Loading, empty and filled cross-fade; the list itself keeps its own item animations.
+        AnimatedContent(
+            when { recent == null -> 0; recent.isEmpty() -> 1; else -> 2 },
+            transitionSpec = { Motion.crossfade() using SizeTransform(clip = false) }, label = "recent",
+        ) { kind ->
+            when (kind) {
+                0 -> RecentSkeleton(Modifier.enterStagger(5))
+                1 -> Box {
+                    NufoCard(Modifier.padding(horizontal = 20.dp).fillMaxWidth().enterStagger(4)) {
+                        Row(Modifier.padding(18.dp), verticalAlignment = Alignment.CenterVertically) {
+                            Box(Modifier.size(44.dp).clip(CircleShape).background(MaterialTheme.colorScheme.primaryContainer), contentAlignment = Alignment.Center) {
+                                Icon(Icons.Outlined.Restaurant, null, tint = MaterialTheme.colorScheme.primary)
+                            }
+                            Spacer(Modifier.width(14.dp))
+                            Column {
+                                Text(stringResource(R.string.home_empty_title), style = MaterialTheme.typography.titleMedium)
+                                Text(stringResource(R.string.home_empty_body), style = MaterialTheme.typography.bodyMedium, color = LocalNufoColors.current.textSecondary)
+                            }
+                        }
                     }
                 }
-            }
-        } else {
-            LazyRow(contentPadding = PaddingValues(horizontal = 20.dp), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-                itemsIndexed(recent.take(12), key = { _, p -> p.key }) { i, p ->
-                    RecentCard(p, { onOpen(p) }, Modifier.enterStagger(5 + i))
+                else -> Box {
+                    LazyRow(contentPadding = PaddingValues(horizontal = 20.dp), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                        itemsIndexed((recent ?: emptyList()).take(12), key = { _, p -> p.key }) { i, p ->
+                            RecentCard(p, { onOpen(p) }, Modifier.enterStagger(5 + i))
+                        }
+                    }
                 }
             }
         }

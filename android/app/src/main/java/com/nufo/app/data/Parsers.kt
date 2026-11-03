@@ -29,6 +29,10 @@ internal fun kcal(kcal: Double?, kj: Double?, perGrams: Double?): Double? {
 
 private fun grade(value: String?) = value?.lowercase()?.takeIf { it.length == 1 && it[0] in 'a'..'e' }
 
+/** Green-Score (formerly Eco-Score) runs A+ to F; Open Food Facts writes A+ as "a-plus". */
+internal fun ecoGrade(value: String?) = value?.lowercase()?.let { if (it == "a-plus") "a+" else it }
+    ?.takeIf { it == "a+" || (it.length == 1 && it[0] in 'a'..'f') }
+
 /** OFF sometimes HTML-escapes names ("Φέτα &quot;Ελαφρύ&quot;"). */
 private fun unescape(s: String) = s.replace("&quot;", "\"").replace("&amp;", "&").replace("&#39;", "'").replace("&apos;", "'")
 
@@ -96,7 +100,7 @@ object OffParser {
             nutritionPerServing = perServing,
             nutriscoreGrade = nutri,
             novaGroup = nova,
-            ecoscoreGrade = grade(p.str("ecoscore_grade")),
+            ecoscoreGrade = ecoGrade(p.str("ecoscore_grade")),
             nufoScore = Scoring.nufoScore(per100, nutri, nova).score,
             source = SOURCE,
             lastUpdated = (p.num("last_modified_t")?.toLong() ?: 0L) * 1000,

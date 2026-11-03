@@ -107,7 +107,7 @@
     <string name="nova_3">Processed food</string>
     <string name="nova_4">Ultra-processed food</string>
     <string name="nutri_explain">Overall nutritional quality, A (best) to E.</string>
-    <string name="eco_explain">Estimated environmental impact, A (lowest) to E.</string>
+    <string name="eco_explain">Estimated environmental impact, A+ (lowest) to F.</string>
     <string name="why_score">Why this score</string>
     <string name="no_reasons">No penalties or bonuses from the data available.</string>
     <string name="reason_nutri_b" translatable="false">Nutri-Score B</string>

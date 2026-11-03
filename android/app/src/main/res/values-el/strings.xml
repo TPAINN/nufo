@@ -97,7 +97,7 @@
     <string name="nova_3">Επεξεργασμένο τρόφιμο</string>
     <string name="nova_4">Υπερ-επεξεργασμένο τρόφιμο</string>
     <string name="nutri_explain">Συνολική διατροφική ποιότητα, από A (καλύτερο) έως E.</string>
-    <string name="eco_explain">Εκτιμώμενο περιβαλλοντικό αποτύπωμα, από A (χαμηλότερο) έως E.</string>
+    <string name="eco_explain">Εκτιμώμενο περιβαλλοντικό αποτύπωμα, από A+ (χαμηλότερο) έως F.</string>
     <string name="why_score">Γιατί αυτός ο βαθμός</string>
     <string name="no_reasons">Τα διαθέσιμα στοιχεία δεν δίνουν ούτε ποινές ούτε μπόνους.</string>
     <string name="reason_nova_2">Επεξεργασμένο συστατικό</string>

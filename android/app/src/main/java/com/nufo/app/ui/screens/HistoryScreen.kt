@@ -1,5 +1,11 @@
 package com.nufo.app.ui.screens
 
+import com.nufo.app.ui.theme.Motion
+import androidx.compose.animation.togetherWith
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.AnimatedContent
 import com.nufo.app.ui.PhotoCorners
 import androidx.compose.animation.animateColorAsState
 import androidx.compose.foundation.background
@@ -89,33 +95,46 @@ fun HistoryScreen(vm: NufoViewModel, onOpen: (Product) -> Unit, onScan: () -> Un
         Column(Modifier.fillMaxSize().statusBarsPadding()) {
             Row(Modifier.fillMaxWidth().padding(start = 20.dp, end = 8.dp, top = 16.dp, bottom = 4.dp), verticalAlignment = Alignment.CenterVertically) {
                 Text(stringResource(R.string.history_title), style = MaterialTheme.typography.headlineMedium, modifier = Modifier.weight(1f))
-                if (history.isNotEmpty()) TextButton({ confirmClear = true }) { Text(stringResource(R.string.history_clear_all)) }
-            }
-            if (loaded == null) {
-                // Database still opening: skeleton rows, never a false "no scans yet".
-                Column(Modifier.padding(20.dp, 12.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
-                    repeat(4) { Box(Modifier.fillMaxWidth().height(88.dp).clip(RoundedCornerShape(22.dp)).background(LocalNufoColors.current.hairline)) }
-                }
-            } else if (history.isEmpty()) {
-                Column(Modifier.fillMaxSize().padding(32.dp), horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.Center) {
-                    Box(Modifier.size(72.dp).clip(CircleShape).background(MaterialTheme.colorScheme.primaryContainer), contentAlignment = Alignment.Center) {
-                        Icon(Icons.Outlined.History, null, tint = MaterialTheme.colorScheme.primary, modifier = Modifier.size(34.dp))
-                    }
-                    Spacer(Modifier.height(16.dp))
-                    Text(stringResource(R.string.history_empty_title), style = MaterialTheme.typography.headlineSmall)
-                    Text(stringResource(R.string.history_empty_body), style = MaterialTheme.typography.bodyLarge,
-                        color = LocalNufoColors.current.textSecondary, textAlign = androidx.compose.ui.text.style.TextAlign.Center)
-                    Spacer(Modifier.height(20.dp))
-                    Button(onScan, shape = RoundedCornerShape(16.dp)) { Text(stringResource(R.string.history_scan)) }
-                }
-            } else {
-                Text(stringResource(R.string.history_swipe), style = MaterialTheme.typography.labelMedium, color = LocalNufoColors.current.textSecondary, modifier = Modifier.padding(start = 20.dp))
-                LazyColumn(contentPadding = PaddingValues(20.dp, 12.dp, 20.dp, 24.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
-                    itemsIndexed(history, key = { _, p -> p.key }) { i, p ->
-                        SwipeRow(p, { onOpen(p) }, { remove(p) }, Modifier.animateItem().enterStagger(i))
-                    }
+                AnimatedVisibility(history.isNotEmpty(), enter = fadeIn(Motion.fadeInSpec()), exit = fadeOut(Motion.fadeOutSpec())) {
+                    TextButton({ confirmClear = true }) { Text(stringResource(R.string.history_clear_all)) }
                 }
             }
+            // Opening, empty and filled cross-fade, so deleting the last scan eases into the empty state.
+            AnimatedContent(
+                when { loaded == null -> 0; history.isEmpty() -> 1; else -> 2 },
+                transitionSpec = { Motion.crossfade() }, label = "history", modifier = Modifier.weight(1f),
+            ) { kind ->
+                when (kind) {
+                    0 -> Box {
+                        // Database still opening: skeleton rows, never a false "no scans yet".
+                        Column(Modifier.padding(20.dp, 12.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                            repeat(4) { Box(Modifier.fillMaxWidth().height(88.dp).clip(RoundedCornerShape(22.dp)).background(LocalNufoColors.current.hairline)) }
+                        }
+                    }
+                    1 -> Box {
+                        Column(Modifier.fillMaxSize().padding(32.dp), horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.Center) {
+                            Box(Modifier.size(72.dp).clip(CircleShape).background(MaterialTheme.colorScheme.primaryContainer), contentAlignment = Alignment.Center) {
+                                Icon(Icons.Outlined.History, null, tint = MaterialTheme.colorScheme.primary, modifier = Modifier.size(34.dp))
+                            }
+                            Spacer(Modifier.height(16.dp))
+                            Text(stringResource(R.string.history_empty_title), style = MaterialTheme.typography.headlineSmall)
+                            Text(stringResource(R.string.history_empty_body), style = MaterialTheme.typography.bodyLarge,
+                                color = LocalNufoColors.current.textSecondary, textAlign = androidx.compose.ui.text.style.TextAlign.Center)
+                            Spacer(Modifier.height(20.dp))
+                            Button(onScan, shape = RoundedCornerShape(16.dp)) { Text(stringResource(R.string.history_scan)) }
+                        }
+                    }
+                    else -> Column {
+                        Text(stringResource(R.string.history_swipe), style = MaterialTheme.typography.labelMedium, color = LocalNufoColors.current.textSecondary, modifier = Modifier.padding(start = 20.dp))
+                        LazyColumn(contentPadding = PaddingValues(20.dp, 12.dp, 20.dp, 24.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                            itemsIndexed(history, key = { _, p -> p.key }) { i, p ->
+                                SwipeRow(p, { onOpen(p) }, { remove(p) }, Modifier.animateItem().enterStagger(i))
+                            }
+                        }
+                    }
+                }
+            }
+
         }
         SnackbarHost(snackbar, Modifier.align(Alignment.BottomCenter).padding(16.dp))
     }

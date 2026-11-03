@@ -138,12 +138,10 @@ fun GradeScale(
     modifier: Modifier = Modifier,
 ) {
     val muted = LocalNufoColors.current.hairline
-    Column(
-        modifier.clearAndSetSemantics {
-            contentDescription = listOfNotNull(if (active == null) null else "$title ${active.uppercase()}", description).joinToString(". ")
-                .ifEmpty { title }
-        },
-    ) {
+    // TalkBack always hears which scale this is: "Nutri-Score C. <meaning>" or "Nutri-Score, not available".
+    val na = stringResource(R.string.not_available)
+    val spoken = if (active == null) "$title, $na" else listOfNotNull("$title ${active.uppercase()}", description).joinToString(". ")
+    Column(modifier.clearAndSetSemantics { contentDescription = spoken }) {
         Row(verticalAlignment = Alignment.CenterVertically) {
             Text(title, style = MaterialTheme.typography.labelLarge, modifier = Modifier.width(92.dp))
             Row(
@@ -195,7 +193,7 @@ fun NovaScale(group: Int?, modifier: Modifier = Modifier) = GradeScale(
 
 @Composable
 fun EcoScoreScale(grade: String?, modifier: Modifier = Modifier) = GradeScale(
-    stringResource(R.string.ecoscore), listOf("a", "b", "c", "d", "e"), grade, ::gradeColor,
+    stringResource(R.string.ecoscore), listOf("a+", "a", "b", "c", "d", "e", "f"), grade, ::gradeColor,
     stringResource(R.string.eco_explain), modifier,
 )
 

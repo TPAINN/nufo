@@ -7,6 +7,8 @@ Needs ffmpeg on PATH. Expects the app freshly installed (starts from a cleared s
 import re, subprocess, sys, time
 from pathlib import Path
 
+sys.stdout.reconfigure(encoding="utf-8")  # Greek labels; python -I ignores PYTHONIOENCODING
+
 SERIAL, OUT = sys.argv[1], Path(sys.argv[2])
 PKG = "com.nufo.app"
 

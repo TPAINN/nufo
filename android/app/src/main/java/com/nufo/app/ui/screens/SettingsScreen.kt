@@ -210,14 +210,16 @@ private fun UpdatesSection(vm: NufoViewModel, auto: Boolean) {
         exit = shrinkVertically(nufoSpring()) + fadeOut(Motion.fadeOutSpec()),
     ) {
         Column(Modifier.padding(top = 12.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-            val available = state as? UpdateState.Available
-            if (available != null) {
-                Button({ vm.offerUpdate(available.update) }, Modifier.fillMaxWidth()) {
-                    Text(stringResource(R.string.s_update_download) + " " + available.update.version)
-                }
-            } else {
-                OutlinedButton(vm::checkForUpdatesNow, Modifier.fillMaxWidth(), enabled = state != UpdateState.Checking) {
-                    Text(stringResource(R.string.s_check_updates))
+            // "Check" turns into "Download" with a cross-fade, never a jump.
+            AnimatedContent(state as? UpdateState.Available, transitionSpec = { Motion.crossfade() }, label = "update-button") { available ->
+                if (available != null) {
+                    Button({ vm.offerUpdate(available.update) }, Modifier.fillMaxWidth()) {
+                        Text(stringResource(R.string.s_update_download) + " " + available.update.version)
+                    }
+                } else {
+                    OutlinedButton(vm::checkForUpdatesNow, Modifier.fillMaxWidth(), enabled = state != UpdateState.Checking) {
+                        Text(stringResource(R.string.s_check_updates))
+                    }
                 }
             }
             AnimatedContent(state, transitionSpec = { Motion.crossfade() using SizeTransform(clip = false) }, label = "update-status") { st ->

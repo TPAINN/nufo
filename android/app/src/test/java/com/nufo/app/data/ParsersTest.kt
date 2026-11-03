@@ -146,3 +146,16 @@ class ParsersTest {
         assertEquals("Sesame seeds", prettyTag("en:sesame-seeds"))
     }
 }
+class EcoGradeTest {
+    @Test fun `Green-Score grades A+ to F are kept`() {
+        org.junit.Assert.assertEquals("a+", ecoGrade("a-plus"))
+        org.junit.Assert.assertEquals("f", ecoGrade("F"))
+        org.junit.Assert.assertEquals("c", ecoGrade("c"))
+    }
+
+    @Test fun `unknown and not applicable are missing, never a grade`() {
+        org.junit.Assert.assertNull(ecoGrade("unknown"))
+        org.junit.Assert.assertNull(ecoGrade("not-applicable"))
+        org.junit.Assert.assertNull(ecoGrade(null))
+    }
+}

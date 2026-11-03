@@ -6,6 +6,7 @@ plugins {
     id("org.jetbrains.kotlin.plugin.compose")
     id("org.jetbrains.kotlin.plugin.serialization")
     id("com.google.devtools.ksp")
+    id("org.jetbrains.kotlinx.kover")
 }
 
 // Optional API keys: local.properties or environment. USDA falls back to its public DEMO_KEY.
@@ -82,6 +83,23 @@ android {
     }
 }
 
+// Unit-test coverage of the logic layer (scoring, parsing, search, labels). UI is covered by instrumented tests.
+// ./gradlew koverHtmlReportDebug koverVerifyDebug
+kover {
+    reports {
+        filters {
+            includes { packages("com.nufo.app.data") }
+            // Android- and network-bound code (Room's generated DAOs, HTTP client, DataStore, installer) runs in the
+            // instrumented tests (androidTest), not on the JVM.
+            excludes {
+                classes("*_Impl*", "com.nufo.app.data.FoodRepository*", "com.nufo.app.data.FoodApi*", "com.nufo.app.data.SettingsStore*",
+                    "com.nufo.app.data.AppInstaller*", "com.nufo.app.data.NufoDatabase*", "com.nufo.app.data.DishTable*", "com.nufo.app.data.NetworkMonitorKt")
+            }
+        }
+        verify { rule { minBound(80) } }
+    }
+}
+
 kotlin { compilerOptions { jvmTarget.set(org.jetbrains.kotlin.gradle.dsl.JvmTarget.JVM_17) } }
 
 dependencies {
@@ -125,5 +143,6 @@ dependencies {
     androidTestImplementation("androidx.compose.ui:ui-test-junit4")
     androidTestImplementation("androidx.test.ext:junit:1.3.0")
     androidTestImplementation("androidx.test:runner:1.7.0")
+    androidTestImplementation("androidx.room:room-testing:2.8.5")
     debugImplementation("androidx.compose.ui:ui-test-manifest")
 }

@@ -118,9 +118,14 @@ fun dietNote(p: Product, diet: Diet): Pair<DietNote, Double?>? {
     val n = p.nutritionPer100g
     val animal = setOf("en:milk", "en:eggs", "en:fish", "en:crustaceans", "en:molluscs")
     val seafood = setOf("en:fish", "en:crustaceans", "en:molluscs")
+    // Meat is not an allergen, so its categories must be checked too ("meat-analogues" are plant-based).
+    val meat = p.categoryTags.any { t ->
+        !t.contains("analogue") && !t.contains("substitute") &&
+            listOf("en:meat", "en:poultr", "en:ham", "en:sausage", "en:fishes", "en:seafood", "en:charcuterie").any { t.startsWith(it) }
+    }
     return when (diet) {
-        Diet.Vegan -> if ("en:vegan" !in p.labelTags && p.allergenTags.any { it in animal }) DietNote.NotVegan to null else null
-        Diet.Vegetarian -> if (p.allergenTags.any { it in seafood }) DietNote.NotVegetarian to null else null
+        Diet.Vegan -> if ("en:vegan" !in p.labelTags && (meat || p.allergenTags.any { it in animal })) DietNote.NotVegan to null else null
+        Diet.Vegetarian -> if ("en:vegetarian" !in p.labelTags && "en:vegan" !in p.labelTags && (meat || p.allergenTags.any { it in seafood })) DietNote.NotVegetarian to null else null
         Diet.Keto -> n.carbs?.takeIf { it > 10 }?.let { DietNote.HighCarbsKeto to it }
         Diet.LowSodium -> n.salt?.takeIf { it > 0.3 }?.let { DietNote.NotLowSodium to it }
         Diet.None -> null

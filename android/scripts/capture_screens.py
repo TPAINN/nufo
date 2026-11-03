@@ -7,6 +7,8 @@ and the same screens at 200 % font scale and in dark mode.
 import re, subprocess, sys, time
 from pathlib import Path
 
+sys.stdout.reconfigure(encoding="utf-8")  # Greek labels; python -I ignores PYTHONIOENCODING
+
 SERIAL, OUT = sys.argv[1], Path(sys.argv[2])
 APK = sys.argv[3] if len(sys.argv) > 3 else None
 PKG = "com.nufo.app"
