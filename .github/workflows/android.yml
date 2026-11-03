@@ -19,7 +19,7 @@ jobs:
       # Release code is built unsigned: the signing key never leaves the maintainer machine.
       - name: Unit tests, lint and a release-code build
         working-directory: android
-        run: ./gradlew --no-daemon testDebugUnitTest lintRelease assembleRelease
+        run: ./gradlew --no-daemon testDebugUnitTest koverVerifyDebug lintRelease assembleRelease
       - name: Keep the reports
         if: always()
         uses: actions/upload-artifact@v4
