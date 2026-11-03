@@ -123,17 +123,17 @@
     <string name="reason_salt">High salt</string>
     <string name="reason_satfat">High saturated fat</string>
     <string name="method_title">How Nufo scores</string>
-    <string name="method_intro">Every result starts at 100. Nufo only adjusts for data the source actually publishes — missing values never cost or earn points.</string>
+    <string name="method_intro">With a Nutri-Score, the grade sets the score: A 100, B 85, C 65, D 45, E 25. The grade already weighs sugar, salt, saturated fat, fibre and protein, so Nufo never counts them twice. Without a grade, Nufo judges the nutrients on the same thresholds as the colour dots. Missing values never cost or earn points.</string>
     <string name="method_rule_nutri" translatable="false">Nutri-Score B / C / D / E</string>
-    <string name="method_rule_nutri_delta" translatable="false">−5 / −15 / −30 / −45</string>
+    <string name="method_rule_nutri_delta" translatable="false">−15 / −35 / −55 / −75</string>
     <string name="method_rule_nova" translatable="false">NOVA 2 / 3 / 4</string>
-    <string name="method_rule_nova_delta" translatable="false">−5 / −15 / −30</string>
-    <string name="method_rule_protein">Protein ≥ 10 g per 100 g</string>
-    <string name="method_rule_fiber">Fibre ≥ 5 g per 100 g</string>
-    <string name="method_rule_sugar">Sugar &gt; 10 g per 100 g</string>
-    <string name="method_rule_salt">Salt &gt; 1 g per 100 g</string>
-    <string name="method_rule_satfat">Saturated fat &gt; 5 g per 100 g</string>
-    <string name="method_official">Nutri-Score, NOVA and Eco-Score are shown exactly as published by Open Food Facts. Nufo never estimates them.</string>
+    <string name="method_rule_nova_delta" translatable="false">−5 / −10 / −15</string>
+    <string name="method_rule_protein">No grade: protein ≥ 10 g per 100 g</string>
+    <string name="method_rule_fiber">No grade: fibre ≥ 6 g per 100 g</string>
+    <string name="method_rule_sugar">No grade: sugar high (red dot) / medium (amber)</string>
+    <string name="method_rule_salt">No grade: salt high / medium</string>
+    <string name="method_rule_satfat">No grade: saturated fat high / medium</string>
+    <string name="method_official">Nutri-Score, NOVA and Eco-Score come from Open Food Facts. When Nufo reads them from a photo of the label instead, the result says so.</string>
     <string name="portion">Portion</string>
     <string name="portion_100g" translatable="false">100 g</string>
     <string name="portion_100g_imperial" translatable="false">100 g (3.5 oz)</string>
@@ -170,7 +170,7 @@
     <string name="level_low">Low</string>
     <string name="level_medium">Medium</string>
     <string name="level_high">High</string>
-    <string name="levels_note">Colours follow UK FSA front-of-pack thresholds for foods, per 100 g.</string>
+    <string name="levels_note">Colours follow the UK FSA front-of-pack thresholds per 100 g, with the lower drink thresholds for drinks.</string>
     <string name="insights_title">Highlights (per 100 g)</string>
     <string name="insight_high_protein">High protein</string>
     <string name="insight_good_fiber">Good source of fibre</string>
@@ -388,5 +388,10 @@
     <string name="loading_step_other">Checking other barcode databases…</string>
     <string name="loading_slow">Taking longer than usual, still trying…</string>
     <string name="search_loading">Searching Open Food Facts and USDA…</string>    <string name="photo_pick_one">Is it one of these?</string>
-    <string name="score_nutrients_only">No Nutri-Score or NOVA from the source, so this score reflects the nutrients only, not how processed it is.</string>
+    <string name="score_nutrients_only">No Nutri-Score from the source, so Nufo judged the nutrients itself, on the same thresholds as the colour dots.</string>
+    <string name="method_rule_fat">No grade: fat high</string>
+    <string name="reason_fat">High fat</string>
+    <string name="reason_sugar_medium">Medium sugar</string>
+    <string name="reason_salt_medium">Medium salt</string>
+    <string name="reason_satfat_medium">Medium saturated fat</string>
 </resources>

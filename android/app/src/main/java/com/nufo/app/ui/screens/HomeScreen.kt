@@ -49,6 +49,7 @@ import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.clearAndSetSemantics
+import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -269,10 +270,15 @@ private fun RecentCard(p: Product, onClick: () -> Unit, modifier: Modifier) {
         Box {
             ProductThumb(p, Modifier.fillMaxWidth().height(104.dp), PhotoCorners(top = 22.dp, bottom = 0.dp))
             // No badge at all when there is too little data for a score.
-            if (com.nufo.app.data.Scoring.canScore(p)) Box(
-                Modifier.align(Alignment.TopEnd).padding(8.dp).size(30.dp).clip(CircleShape).background(scoreColor(p.nufoScore)),
-                contentAlignment = Alignment.Center,
-            ) { Text(p.nufoScore.toString(), style = MaterialTheme.typography.labelMedium, color = Color.White) }
+            val score = remember(p) { com.nufo.app.data.Scoring.score(p)?.score }
+            if (score != null) {
+                val scoreCd = stringResource(R.string.nufo_score_cd, score)
+                Box(
+                    Modifier.align(Alignment.TopEnd).padding(8.dp).size(30.dp).clip(CircleShape).background(scoreColor(score))
+                        .clearAndSetSemantics { contentDescription = scoreCd },
+                    contentAlignment = Alignment.Center,
+                ) { Text(score.toString(), style = MaterialTheme.typography.labelMedium, color = Color.White) }
+            }
         }
         Column(Modifier.padding(12.dp)) {
             Text(p.displayName(), style = MaterialTheme.typography.labelLarge, maxLines = 2, overflow = TextOverflow.Ellipsis, minLines = 2)

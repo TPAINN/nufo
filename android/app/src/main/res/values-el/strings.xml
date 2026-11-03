@@ -109,13 +109,13 @@
     <string name="reason_salt">Πολύ αλάτι</string>
     <string name="reason_satfat">Πολλά κορεσμένα λιπαρά</string>
     <string name="method_title">Πώς βαθμολογεί το Nufo</string>
-    <string name="method_intro">Κάθε αποτέλεσμα ξεκινά από το 100. Το Nufo προσαρμόζει τον βαθμό μόνο με στοιχεία που δημοσιεύει η πηγή — τα στοιχεία που λείπουν δεν αφαιρούν ούτε προσθέτουν πόντους.</string>
-    <string name="method_rule_protein">Πρωτεΐνη ≥ 10 g ανά 100 g</string>
-    <string name="method_rule_fiber">Φυτικές ίνες ≥ 5 g ανά 100 g</string>
-    <string name="method_rule_sugar">Σάκχαρα &gt; 10 g ανά 100 g</string>
-    <string name="method_rule_salt">Αλάτι &gt; 1 g ανά 100 g</string>
-    <string name="method_rule_satfat">Κορεσμένα λιπαρά &gt; 5 g ανά 100 g</string>
-    <string name="method_official">Τα Nutri-Score, NOVA και Eco-Score εμφανίζονται ακριβώς όπως τα δημοσιεύει το Open Food Facts. Το Nufo δεν τα εκτιμά ποτέ μόνο του.</string>
+    <string name="method_intro">Όταν υπάρχει Nutri-Score, ο βαθμός ορίζει τη βαθμολογία: A 100, B 85, C 65, D 45, E 25. Ο βαθμός ήδη υπολογίζει σάκχαρα, αλάτι, κορεσμένα λιπαρά, φυτικές ίνες και πρωτεΐνη, οπότε το Nufo δεν τα μετράει ποτέ δύο φορές. Χωρίς βαθμό, το Nufo κρίνει τα θρεπτικά στοιχεία με τα ίδια όρια που έχουν οι χρωματιστές τελείες. Όσα λείπουν δεν αφαιρούν ούτε προσθέτουν πόντους.</string>
+    <string name="method_rule_protein">Χωρίς βαθμό: πρωτεΐνη ≥ 10 g ανά 100 g</string>
+    <string name="method_rule_fiber">Χωρίς βαθμό: φυτικές ίνες ≥ 6 g ανά 100 g</string>
+    <string name="method_rule_sugar">Χωρίς βαθμό: σάκχαρα υψηλά (κόκκινο) / μέτρια (πορτοκαλί)</string>
+    <string name="method_rule_salt">Χωρίς βαθμό: αλάτι υψηλό / μέτριο</string>
+    <string name="method_rule_satfat">Χωρίς βαθμό: κορεσμένα λιπαρά υψηλά / μέτρια</string>
+    <string name="method_official">Τα Nutri-Score, NOVA και Eco-Score προέρχονται από το Open Food Facts. Όταν το Nufo τα διαβάζει από φωτογραφία της ετικέτας, το αποτέλεσμα το αναφέρει.</string>
     <string name="portion">Μερίδα</string>
     <string name="portion_serving">Μερίδα συσκευασίας</string>
     <string name="portion_serving_w">Μερίδα · %1$s</string>
@@ -149,7 +149,7 @@
     <string name="level_low">Χαμηλό</string>
     <string name="level_medium">Μέτριο</string>
     <string name="level_high">Υψηλό</string>
-    <string name="levels_note">Τα χρώματα ακολουθούν τα όρια της βρετανικής FSA για τρόφιμα, ανά 100 g.</string>
+    <string name="levels_note">Τα χρώματα ακολουθούν τα όρια της βρετανικής FSA ανά 100 g, με τα χαμηλότερα όρια για τα ποτά.</string>
     <string name="insights_title">Επισημάνσεις (ανά 100 g)</string>
     <string name="insight_high_protein">Υψηλή πρωτεΐνη</string>
     <string name="insight_good_fiber">Καλή πηγή φυτικών ινών</string>
@@ -363,5 +363,10 @@
     <string name="loading_step_other">Έλεγχος σε άλλες βάσεις barcode…</string>
     <string name="loading_slow">Αργεί περισσότερο από το συνηθισμένο, συνεχίζουμε…</string>
     <string name="search_loading">Αναζήτηση σε Open Food Facts και USDA…</string>    <string name="photo_pick_one">Είναι κάποιο από αυτά;</string>
-    <string name="score_nutrients_only">Η πηγή δεν δίνει Nutri-Score ή NOVA, οπότε ο βαθμός αφορά μόνο τα θρεπτικά στοιχεία, όχι το πόσο επεξεργασμένο είναι.</string>
+    <string name="score_nutrients_only">Η πηγή δεν δίνει Nutri-Score, οπότε το Nufo έκρινε μόνο του τα θρεπτικά στοιχεία, με τα ίδια όρια που έχουν οι χρωματιστές τελείες.</string>
+    <string name="method_rule_fat">Χωρίς βαθμό: λιπαρά υψηλά</string>
+    <string name="reason_fat">Πολλά λιπαρά</string>
+    <string name="reason_sugar_medium">Μέτρια σάκχαρα</string>
+    <string name="reason_salt_medium">Μέτριο αλάτι</string>
+    <string name="reason_satfat_medium">Μέτρια κορεσμένα λιπαρά</string>
 </resources>

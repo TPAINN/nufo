@@ -84,11 +84,12 @@ fun MethodologySheet(onDismiss: () -> Unit) = NufoSheet(onDismiss, stringResourc
     val rules = listOf(
         stringResource(R.string.method_rule_nutri) to stringResource(R.string.method_rule_nutri_delta),
         stringResource(R.string.method_rule_nova) to stringResource(R.string.method_rule_nova_delta),
-        stringResource(R.string.method_rule_protein) to "+10",
-        stringResource(R.string.method_rule_fiber) to "+10",
-        stringResource(R.string.method_rule_sugar) to "−15",
-        stringResource(R.string.method_rule_salt) to "−15",
-        stringResource(R.string.method_rule_satfat) to "−10",
+        stringResource(R.string.method_rule_sugar) to "−20 / −5",
+        stringResource(R.string.method_rule_salt) to "−20 / −5",
+        stringResource(R.string.method_rule_satfat) to "−20 / −5",
+        stringResource(R.string.method_rule_fat) to "−10",
+        stringResource(R.string.method_rule_protein) to "+5",
+        stringResource(R.string.method_rule_fiber) to "+5",
     )
     Column(Modifier.clip(MaterialTheme.shapes.medium).background(LocalNufoColors.current.card)) {
         rules.forEachIndexed { i, (rule, delta) ->

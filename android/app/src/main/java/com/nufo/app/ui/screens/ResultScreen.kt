@@ -257,7 +257,7 @@ fun ResultScreen(vm: NufoViewModel, onBack: () -> Unit, onSearch: (String) -> Un
 @Composable
 private fun shareText(p: Product) = buildString {
     append(p.displayName()); p.brand?.let { append(" — $it") }; append("\n")
-    if (Scoring.canScore(p)) append(stringResource(R.string.share_score, p.nufoScore))
+    Scoring.score(p)?.let { append(stringResource(R.string.share_score, it.score)) }
     p.nutriscoreGrade?.let { append(" · Nutri-Score ${it.uppercase()}") }
     p.novaGroup?.let { append(" · NOVA $it") }
     p.nutritionPer100g.calories?.let { append("\n" + stringResource(R.string.share_kcal, it.toInt())) }
@@ -590,14 +590,15 @@ private fun ProductDetail(p: Product, cachedAt: Long?, vm: NufoViewModel, units:
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
 private fun ScoreCard(p: Product, onMethod: () -> Unit, modifier: Modifier) {
+    // One computation feeds the ring, the verdict and the reason chips, so they can never disagree.
+    val result = remember(p) { Scoring.score(p) }
     NufoCard(modifier.fillMaxWidth()) {
         Row(Modifier.padding(start = 18.dp, end = 18.dp, top = 18.dp), verticalAlignment = Alignment.CenterVertically) {
-            val scored = Scoring.canScore(p)
-            ScoreRing(p.nufoScore.takeIf { scored })
+            ScoreRing(result?.score)
             Spacer(Modifier.width(18.dp))
             Column(Modifier.weight(1f)) {
                 Text(stringResource(R.string.nufo_score), style = MaterialTheme.typography.labelMedium, color = LocalNufoColors.current.textSecondary)
-                if (scored) Text(stringResource(Verdict.of(p.nufoScore).label()), style = MaterialTheme.typography.headlineSmall, color = scoreTextColor(p.nufoScore))
+                if (result != null) Text(stringResource(Verdict.of(result.score).label()), style = MaterialTheme.typography.headlineSmall, color = scoreTextColor(result.score))
                 else Text(stringResource(R.string.score_insufficient), style = MaterialTheme.typography.titleLarge, color = LocalNufoColors.current.textSecondary)
                 Spacer(Modifier.height(4.dp))
                 Row(
@@ -613,9 +614,9 @@ private fun ScoreCard(p: Product, onMethod: () -> Unit, modifier: Modifier) {
         Column(Modifier.padding(18.dp), verticalArrangement = Arrangement.spacedBy(14.dp)) {
             Box(Modifier.fillMaxWidth().height(1.dp).background(LocalNufoColors.current.hairline))
             // Without the official grades a high score only means "no red flags in the nutrients"; say so.
-            if (!Scoring.canScore(p)) {
+            if (result == null) {
                 Text(stringResource(R.string.score_insufficient_body), style = MaterialTheme.typography.bodyMedium, color = LocalNufoColors.current.textSecondary)
-            } else if (p.nutriscoreGrade == null && p.novaGroup == null) {
+            } else if (p.nutriscoreGrade == null) {
                 Text(stringResource(R.string.score_nutrients_only), style = MaterialTheme.typography.bodyMedium, color = LocalNufoColors.current.textSecondary)
             }
             NutriScoreScale(p.nutriscoreGrade)
@@ -625,7 +626,7 @@ private fun ScoreCard(p: Product, onMethod: () -> Unit, modifier: Modifier) {
             }
             EcoScoreScale(p.ecoscoreGrade)
             Box(Modifier.fillMaxWidth().height(1.dp).background(LocalNufoColors.current.hairline))
-            val reasons = if (Scoring.canScore(p)) Scoring.reasons(p) else emptyList()
+            val reasons = result?.reasons.orEmpty()
             if (reasons.isNotEmpty()) {
                 Text(stringResource(R.string.why_score), style = MaterialTheme.typography.labelLarge)
                 FlowRow(horizontalArrangement = Arrangement.spacedBy(6.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
@@ -729,15 +730,16 @@ private fun NutritionTab(p: Product, n: Nutrition, portionLabel: String?) {
         }
 
         // Mirrors the table printed on EU packaging, so every number can be checked against the pack.
+        val drink = Scoring.isDrink(p)
         val rows = listOf(
             DeclRow(R.string.n_energy, h.calories, n.calories, kcal = true),
-            DeclRow(R.string.n_fat, h.fat, n.fat, level = h.fat?.let(Scoring::fatLevel)),
-            DeclRow(R.string.n_satfat, h.saturatedFat, n.saturatedFat, indent = true, level = h.saturatedFat?.let(Scoring::satFatLevel)),
+            DeclRow(R.string.n_fat, h.fat, n.fat, level = h.fat?.let { Scoring.fatLevel(it, drink) }),
+            DeclRow(R.string.n_satfat, h.saturatedFat, n.saturatedFat, indent = true, level = h.saturatedFat?.let { Scoring.satFatLevel(it, drink) }),
             DeclRow(R.string.n_carbs, h.carbs, n.carbs),
-            DeclRow(R.string.n_sugar, h.sugar, n.sugar, indent = true, level = h.sugar?.let(Scoring::sugarLevel)),
+            DeclRow(R.string.n_sugar, h.sugar, n.sugar, indent = true, level = h.sugar?.let { Scoring.sugarLevel(it, drink) }),
             DeclRow(R.string.n_fiber, h.fiber, n.fiber),
             DeclRow(R.string.n_protein, h.protein, n.protein),
-            DeclRow(R.string.n_salt, h.salt, n.salt, level = h.salt?.let(Scoring::saltLevel)),
+            DeclRow(R.string.n_salt, h.salt, n.salt, level = h.salt?.let { Scoring.saltLevel(it, drink) }),
         )
         NufoCard(Modifier.fillMaxWidth().enterStagger(4)) {
             Column(Modifier.padding(horizontal = 18.dp, vertical = 16.dp)) {

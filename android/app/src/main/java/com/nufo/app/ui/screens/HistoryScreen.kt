@@ -48,6 +48,8 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.semantics.CustomAccessibilityAction
 import androidx.compose.ui.semantics.customActions
+import androidx.compose.ui.semantics.clearAndSetSemantics
+import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
@@ -169,9 +171,14 @@ private fun SwipeRow(p: Product, onOpen: () -> Unit, onDelete: () -> Unit, modif
                     )
                 }
                 Spacer(Modifier.width(8.dp))
-                val scored = com.nufo.app.data.Scoring.canScore(p)
-                Box(Modifier.size(40.dp).clip(CircleShape).background(if (scored) scoreColor(p.nufoScore) else LocalNufoColors.current.hairline), contentAlignment = Alignment.Center) {
-                    Text(if (scored) p.nufoScore.toString() else "–", style = MaterialTheme.typography.titleMedium, color = if (scored) Color.White else LocalNufoColors.current.textSecondary)
+                val score = remember(p) { com.nufo.app.data.Scoring.score(p)?.score }
+                val scoreCd = score?.let { stringResource(R.string.nufo_score_cd, it) } ?: stringResource(R.string.score_insufficient)
+                Box(
+                    Modifier.size(40.dp).clip(CircleShape).background(score?.let { scoreColor(it) } ?: LocalNufoColors.current.hairline)
+                        .clearAndSetSemantics { contentDescription = scoreCd },
+                    contentAlignment = Alignment.Center,
+                ) {
+                    Text(score?.toString() ?: "–", style = MaterialTheme.typography.titleMedium, color = if (score != null) Color.White else LocalNufoColors.current.textSecondary)
                 }
             }
         }

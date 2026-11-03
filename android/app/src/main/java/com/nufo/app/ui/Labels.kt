@@ -31,6 +31,8 @@ fun currentDataLang(): String = dataLang(LocalConfiguration.current.locales[0])
     Reason.Nova2 -> R.string.reason_nova_2; Reason.Nova3 -> R.string.reason_nova_3; Reason.Nova4 -> R.string.reason_nova_4
     Reason.HighProtein -> R.string.reason_protein; Reason.HighFiber -> R.string.reason_fiber
     Reason.HighSugar -> R.string.reason_sugar; Reason.HighSalt -> R.string.reason_salt; Reason.HighSatFat -> R.string.reason_satfat
+    Reason.HighFat -> R.string.reason_fat; Reason.MediumSugar -> R.string.reason_sugar_medium
+    Reason.MediumSalt -> R.string.reason_salt_medium; Reason.MediumSatFat -> R.string.reason_satfat_medium
 }
 
 @StringRes fun InsightKind.label() = when (this) {

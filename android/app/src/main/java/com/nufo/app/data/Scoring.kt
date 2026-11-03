@@ -1,7 +1,10 @@
 package com.nufo.app.data
 
 /** Why the Nufo Score moved. The UI turns each kind into a sentence in the app language. */
-enum class Reason { NutriB, NutriC, NutriD, NutriE, Nova2, Nova3, Nova4, HighProtein, HighFiber, HighSugar, HighSalt, HighSatFat }
+enum class Reason {
+    NutriB, NutriC, NutriD, NutriE, Nova2, Nova3, Nova4,
+    HighProtein, HighFiber, HighFat, HighSugar, HighSalt, HighSatFat, MediumSugar, MediumSalt, MediumSatFat,
+}
 
 data class ScoreReason(val reason: Reason, val delta: Int)
 
@@ -25,43 +28,64 @@ enum class Verdict { Excellent, Good, Fair, Poor, VeryPoor;
 enum class Level { Low, Medium, High }
 
 /**
- * Transparent 0–100 score. Every adjustment is returned as a reason so the UI can show
+ * Transparent 0–100 score (rules in docs/SCORING.md). Every adjustment is returned as a reason so the UI can show
  * exactly why a product scored what it did. Missing inputs contribute nothing — never guessed.
+ *
+ * With a Nutri-Score grade the grade is the base: it already weighs energy, sugar, saturated fat, salt, fibre,
+ * protein and fruit/vegetables, so those nutrients are not counted a second time. Without a grade the nutrients
+ * are judged on the same UK FSA table the traffic-light dots use, so the score and the dots never disagree.
+ * NOVA processing adjusts both, never by more than one grade step.
  */
 object Scoring {
-    fun nufoScore(n: Nutrition, nutriscore: String?, nova: Int?): NufoScoreResult {
+    private val gradePenalty = mapOf("b" to -15, "c" to -35, "d" to -55, "e" to -75)
+    private val novaPenalty = mapOf(2 to -5, 3 to -10, 4 to -15)
+
+    /** The score for this product under the current rules, or null when it declares too little to score fairly. */
+    fun score(p: Product): NufoScoreResult? = if (canScore(p)) nufoScore(p.nutritionPer100g, p.nutriscoreGrade, p.novaGroup, isDrink(p)) else null
+
+    fun nufoScore(n: Nutrition, nutriscore: String?, nova: Int?, drink: Boolean = false): NufoScoreResult {
+        val grade = nutriscore?.lowercase()?.takeIf { it in "abcde" && it.length == 1 }
         val reasons = buildList {
-            when (nutriscore?.lowercase()) {
-                "b" -> add(ScoreReason(Reason.NutriB, -5))
-                "c" -> add(ScoreReason(Reason.NutriC, -15))
-                "d" -> add(ScoreReason(Reason.NutriD, -30))
-                "e" -> add(ScoreReason(Reason.NutriE, -45))
+            if (grade != null) {
+                gradePenalty[grade]?.let { add(ScoreReason(gradeReason(grade), it)) }
+            } else {
+                n.fat?.let { if (fatLevel(it, drink) == Level.High) add(ScoreReason(Reason.HighFat, -10)) }
+                n.saturatedFat?.let { penalise(satFatLevel(it, drink), Reason.HighSatFat, Reason.MediumSatFat) }
+                n.sugar?.let { penalise(sugarLevel(it, drink), Reason.HighSugar, Reason.MediumSugar) }
+                (n.salt ?: n.sodium?.times(2.5))?.let { penalise(saltLevel(it, drink), Reason.HighSalt, Reason.MediumSalt) }
+                if ((n.protein ?: 0.0) >= 10) add(ScoreReason(Reason.HighProtein, +5))
+                // EU "high fibre" claim threshold.
+                if ((n.fiber ?: 0.0) >= 6) add(ScoreReason(Reason.HighFiber, +5))
             }
-            when (nova) {
-                2 -> add(ScoreReason(Reason.Nova2, -5))
-                3 -> add(ScoreReason(Reason.Nova3, -15))
-                4 -> add(ScoreReason(Reason.Nova4, -30))
-            }
-            if ((n.protein ?: 0.0) >= 10) add(ScoreReason(Reason.HighProtein, +10))
-            if ((n.fiber ?: 0.0) >= 5) add(ScoreReason(Reason.HighFiber, +10))
-            if ((n.sugar ?: 0.0) > 10) add(ScoreReason(Reason.HighSugar, -15))
-            if ((n.salt ?: 0.0) > 1) add(ScoreReason(Reason.HighSalt, -15))
-            if ((n.saturatedFat ?: 0.0) > 5) add(ScoreReason(Reason.HighSatFat, -10))
+            nova?.let { g -> novaPenalty[g]?.let { add(ScoreReason(novaReason(g), it)) } }
         }
         return NufoScoreResult((100 + reasons.sumOf { it.delta }).coerceIn(0, 100), reasons)
     }
 
+    private fun MutableList<ScoreReason>.penalise(level: Level, high: Reason, medium: Reason) = when (level) {
+        Level.High -> add(ScoreReason(high, -20))
+        Level.Medium -> add(ScoreReason(medium, -5))
+        Level.Low -> false
+    }
+
+    private fun gradeReason(g: String) = when (g) { "b" -> Reason.NutriB; "c" -> Reason.NutriC; "d" -> Reason.NutriD; else -> Reason.NutriE }
+    private fun novaReason(n: Int) = when (n) { 2 -> Reason.Nova2; 3 -> Reason.Nova3; else -> Reason.Nova4 }
+
     /**
      * A score needs evidence: an official grade, or most of the key nutrients. Without either (a stub entry with a
      * name and little else) a high score would only mean "nothing was declared", so no score is shown at all.
+     * A NOVA group alone says how processed a food is, not how nutritious, so it is not enough on its own.
      */
     fun canScore(p: Product): Boolean {
         val n = p.nutritionPer100g
-        return p.nutriscoreGrade != null || p.novaGroup != null ||
+        return p.nutriscoreGrade != null ||
             listOf(n.calories, n.fat, n.saturatedFat, n.sugar, n.salt ?: n.sodium, n.protein).count { it != null } >= 4
     }
 
-    fun reasons(p: Product) = nufoScore(p.nutritionPer100g, p.nutriscoreGrade, p.novaGroup).reasons
+    /** Drinks are judged per 100 ml on the FSA drink thresholds, which are half the food ones. */
+    fun isDrink(p: Product) = p.categoryTags.any { it == "en:beverages" || it == "en:drinks" || it.endsWith("-beverages") }
+
+    fun reasons(p: Product) = score(p)?.reasons.orEmpty()
 
     fun insights(p: Product): List<InsightKind> {
         val n = p.nutritionPer100g
@@ -76,13 +100,15 @@ object Scoring {
         }
     }
 
-    // FSA thresholds per 100 g of food (low ≤, high >). Drinks use half these values; Nufo can't
-    // always tell drinks apart, so the food thresholds are shown and labelled as such.
-    fun fatLevel(g: Double) = level(g, 3.0, 17.5)
-    fun satFatLevel(g: Double) = level(g, 1.5, 5.0)
-    fun sugarLevel(g: Double) = level(g, 5.0, 22.5)
-    fun saltLevel(g: Double) = level(g, 0.3, 1.5)
-    private fun level(v: Double, low: Double, high: Double) = when { v <= low -> Level.Low; v > high -> Level.High; else -> Level.Medium }
+    // FSA front-of-pack thresholds per 100 g of food (low ≤, high >). Drinks use half these values per 100 ml.
+    fun fatLevel(g: Double, drink: Boolean = false) = level(g, 3.0, 17.5, drink)
+    fun satFatLevel(g: Double, drink: Boolean = false) = level(g, 1.5, 5.0, drink)
+    fun sugarLevel(g: Double, drink: Boolean = false) = level(g, 5.0, 22.5, drink)
+    fun saltLevel(g: Double, drink: Boolean = false) = level(g, 0.3, 1.5, drink)
+    private fun level(v: Double, low: Double, high: Double, drink: Boolean): Level {
+        val f = if (drink) 0.5 else 1.0
+        return when { v <= low * f -> Level.Low; v > high * f -> Level.High; else -> Level.Medium }
+    }
 }
 
 enum class DietNote { NotVegan, NotVegetarian, HighCarbsKeto, NotLowSodium }
