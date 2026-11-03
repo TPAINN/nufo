@@ -1,5 +1,11 @@
 package com.nufo.app.ui.components
 
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.setValue
+import androidx.compose.runtime.getValue
+import androidx.compose.animation.scaleOut
+import androidx.compose.animation.core.tween
 import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.SizeTransform
 import androidx.compose.animation.fadeIn
@@ -68,21 +74,26 @@ fun NufoToastHost(state: SnackbarHostState, modifier: Modifier = Modifier) {
         delay(a11y?.calculateRecommendedTimeoutMillis(base, containsIcons = true, containsText = true, containsControls = hasAction) ?: base)
         d.dismiss()
     }
+    // How the last toast ended decides how it leaves: timed out, it sinks back the way it came; Undo, it fades in place.
+    var undone by remember { mutableStateOf(false) }
     AnimatedContent(
         data,
         transitionSpec = {
             // Unclipped: it rises from behind the bottom bar instead of being cut off by a hard line at its own edge.
-            ((slideInVertically(nufoSpring()) { it } + fadeIn(Motion.fadeInSpec())) togetherWith
-                (slideOutVertically(nufoSpring()) { it / 2 } + fadeOut(Motion.fadeOutSpec()))) using SizeTransform(clip = false)
+            val enter = slideInVertically(nufoSpring()) { it } + fadeIn(Motion.fadeInSpec())
+            val exit = if (undone) fadeOut(tween(260, easing = Motion.EaseOut)) + scaleOut(tween(260, easing = Motion.EaseOut), targetScale = 0.96f)
+            else slideOutVertically(nufoSpring()) { it } + fadeOut(tween(Motion.BASE, delayMillis = Motion.FAST / 2))
+            (enter togetherWith exit) using SizeTransform(clip = false)
         },
         contentAlignment = Alignment.BottomCenter,
         label = "toast",
         modifier = modifier,
-    ) { d -> if (d != null) NufoToast(d) else Box(Modifier.fillMaxWidth()) }
+    ) { d -> if (d != null) NufoToast(d, onAction = { undone = true; d.performAction() }) else Box(Modifier.fillMaxWidth()) }
+    LaunchedEffect(data) { if (data != null) undone = false }
 }
 
 @Composable
-private fun NufoToast(data: SnackbarData) {
+private fun NufoToast(data: SnackbarData, onAction: () -> Unit) {
     val colors = LocalNufoColors.current
     val shape = RoundedCornerShape(18.dp)
     val action = data.visuals.actionLabel
@@ -101,7 +112,7 @@ private fun NufoToast(data: SnackbarData) {
         Spacer(Modifier.width(12.dp))
         Text(data.visuals.message, style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurface,
             maxLines = 2, modifier = Modifier.weight(1f).padding(vertical = 12.dp))
-        if (action != null) TextButton(data::performAction) {
+        if (action != null) TextButton(onAction) {
             Text(action, style = MaterialTheme.typography.labelLarge, color = MaterialTheme.colorScheme.primary)
         } else Spacer(Modifier.width(8.dp))
     }

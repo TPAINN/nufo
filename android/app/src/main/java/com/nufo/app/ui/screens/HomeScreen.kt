@@ -1,5 +1,8 @@
 package com.nufo.app.ui.screens
 
+import kotlinx.coroutines.launch
+import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.mutableIntStateOf
 import com.nufo.app.ui.theme.Motion
 import androidx.compose.animation.togetherWith
 import androidx.compose.animation.SizeTransform
@@ -336,15 +339,25 @@ fun ProductThumb(
         if (imageUrl != null) {
             var loaded by remember(imageUrl) { mutableStateOf(false) }
             var fullLoaded by remember(imageUrl) { mutableStateOf(false) }
+            // The Open Food Facts image server can stall past the 30 s read timeout when a whole result list loads at
+            // once. Coil never retries, so a photo that failed once stayed a letter for good: try twice more, spaced out.
+            var attempt by remember(imageUrl) { mutableIntStateOf(0) }
+            val scope = rememberCoroutineScope()
             // Packshots sit on white, with a little air around them.
             val frame = Modifier.fillMaxSize().then(if (loaded) Modifier.background(Color.White).padding(if (hero) 16.dp else 8.dp) else Modifier)
             // One decoded 400 px bitmap for every place this photo appears: a list thumbnail and the hero that
             // opens from it share the memory-cache entry, so the photo is there from the first frame of the push.
+            val request = remember(imageUrl, attempt) {
+                ImageRequest.Builder(context).data(offImage(imageUrl, "400")).size(coil3.size.Size.ORIGINAL).crossfade(220).build()
+            }
             AsyncImage(
-                ImageRequest.Builder(context).data(offImage(imageUrl, "400")).size(coil3.size.Size.ORIGINAL).crossfade(220).build(),
+                request,
                 contentDescription = null, contentScale = ContentScale.Fit,
                 onSuccess = { loaded = true },
-                onError = { android.util.Log.w("Nufo", "Image failed: $imageUrl", it.result.throwable) },
+                onError = {
+                    android.util.Log.w("Nufo", "Image failed (attempt ${attempt + 1}): $imageUrl", it.result.throwable)
+                    if (attempt < 2) scope.launch { kotlinx.coroutines.delay(1_500L * (attempt + 1)); attempt++ }
+                },
                 modifier = frame.graphicsLayer { alpha = if (fullLoaded) 0f else 1f },
             )
             if (hero) AsyncImage(
