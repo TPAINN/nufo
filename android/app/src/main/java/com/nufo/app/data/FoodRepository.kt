@@ -105,8 +105,23 @@ class FoodRepository(
         p.copy(tagNames = parts.flatMap { it.await().entries }.associate { it.key to it.value })
     }
 
-    suspend fun product(hit: SearchHit, lang: String, onStep: (LookupStep) -> Unit = {}): Lookup =
-        hit.product?.let { Lookup.Found(it) } ?: hit.barcode?.let { lookupBarcode(it, lang, onStep) } ?: Lookup.NotFound()
+    suspend fun product(hit: SearchHit, lang: String, onStep: (LookupStep) -> Unit = {}): Lookup {
+        val lookup = hit.product?.let { Lookup.Found(it) } ?: hit.barcode?.let { lookupBarcode(it, lang, onStep) } ?: Lookup.NotFound()
+        return if (lookup is Lookup.Found) lookup.copy(product = withListPhoto(lookup.product, hit)) else lookup
+    }
+
+    /**
+     * The page shows the photo the result row showed, so it is on screen from the first frame of the push. The search
+     * index can hold an older revision of the same packshot than the live product API ("front_en.32" vs ".44"): a
+     * different URL meant a fresh download, the letter placeholder meanwhile, and on a slow connection no photo at all.
+     * A generic picture of the food stays as the illustration, never as the product's own photo.
+     */
+    private fun withListPhoto(p: Product, hit: SearchHit): Product = when {
+        hit.imageUrl == null -> p
+        hit.illustrative -> p.copy(illustrationUrl = hit.imageUrl)
+        hit.barcode == p.barcode -> p.copy(imageUrl = hit.imageUrl)
+        else -> p
+    }
 
     /**
      * Understands the query, asks Open Food Facts and the bundled USDA table in parallel, then ranks
@@ -155,7 +170,7 @@ class FoodRepository(
                     // USDA foods are the food itself, so the picture is theirs on the product page too.
                     h.source == UsdaParser.SOURCE -> h.copy(imageUrl = pic, product = h.product?.copy(imageUrl = h.product.imageUrl ?: pic))
                     // A packaged product keeps an honest empty photo on its own page; the list only needs a cue.
-                    else -> h.copy(imageUrl = pic)
+                    else -> h.copy(imageUrl = pic, illustrative = true)
                 }
             }
         }.awaitAll()

@@ -45,7 +45,12 @@ data class Product(
     val nutriscoreFromLabel: Boolean = false,
     /** The NOVA group was estimated from the label's ingredient list, not published by the source. */
     val novaFromLabel: Boolean = false,
+    /** A generic picture of the food (not this package), shown when the product has no photo of its own. */
+    val illustrationUrl: String? = null,
 ) {
+    /** What to show: the product's own photo, else the illustrative picture its search result showed. */
+    val photoUrl: String? get() = imageUrl ?: illustrationUrl
+
     /** Stable key for history: barcode when known, otherwise source + name. */
     val key: String get() = barcode ?: "$source:$name"
 
@@ -89,6 +94,8 @@ data class SearchHit(
     val barcode: String? = null,
     val product: Product? = null,
     val soldInGreece: Boolean = false,
+    /** [imageUrl] is a generic picture of the food, not a photo of this package. */
+    val illustrative: Boolean = false,
 )
 
 // Open Food Facts serves each selected photo at 100/200/400 px height and at full resolution

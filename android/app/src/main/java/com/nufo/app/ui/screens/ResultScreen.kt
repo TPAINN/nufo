@@ -409,8 +409,16 @@ private fun ProductDetail(p: Product, cachedAt: Long?, vm: NufoViewModel, units:
 
     Column(Modifier.verticalScroll(rememberScrollState()).navigationBarsPadding().padding(bottom = 28.dp)) {
         NufoCard(Modifier.padding(horizontal = 20.dp).fillMaxWidth().enterStagger(0), corner = 28.dp) {
-            // Without a photo a tall empty box looks unfinished; keep the placeholder compact.
-            ProductThumb(p, Modifier.fillMaxWidth().height(if (p.imageUrl == null) 120.dp else 260.dp), PhotoCorners(28.dp), hero = true)
+            // Without any picture a tall empty box looks unfinished; keep the placeholder compact. An illustration keeps
+            // the full height, so the photo that flew in from the search row lands without the card jumping.
+            Box {
+                ProductThumb(p, Modifier.fillMaxWidth().height(if (p.photoUrl == null) 120.dp else 260.dp), PhotoCorners(28.dp), hero = true)
+                if (p.imageUrl == null && p.illustrationUrl != null) Text(
+                    stringResource(R.string.photo_illustrative), style = MaterialTheme.typography.labelSmall, color = Color.White,
+                    modifier = Modifier.align(Alignment.BottomStart).padding(12.dp).clip(RoundedCornerShape(50))
+                        .background(Color.Black.copy(alpha = 0.55f)).padding(horizontal = 10.dp, vertical = 4.dp),
+                )
+            }
         }
         Spacer(Modifier.height(18.dp))
         Column(Modifier.padding(horizontal = 20.dp).enterStagger(1)) {

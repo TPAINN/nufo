@@ -310,10 +310,15 @@ private fun RecentCard(p: Product, onClick: () -> Unit, modifier: Modifier) {
  */
 @Composable
 fun ProductThumb(p: Product, modifier: Modifier, corners: PhotoCorners, hero: Boolean = false) =
-    ProductThumb(p.imageUrl, p.displayName(), modifier, corners, hero, photoKey(p.barcode, p.name))
+    ProductThumb(p.photoUrl, p.displayName(), modifier, corners, hero, photoKey(p.barcode, p.name),
+        underlayUrl = p.illustrationUrl.takeIf { p.imageUrl != null })
 
 @Composable
-fun ProductThumb(imageUrl: String?, name: String, modifier: Modifier, corners: PhotoCorners, hero: Boolean = false, sharedKey: String? = null) {
+fun ProductThumb(
+    imageUrl: String?, name: String, modifier: Modifier, corners: PhotoCorners, hero: Boolean = false, sharedKey: String? = null,
+    /** Already-cached picture drawn underneath while [imageUrl] loads (the illustration the search row showed). */
+    underlayUrl: String? = null,
+) {
     val context = LocalContext.current
     Box(
         modifier.then(
@@ -324,6 +329,10 @@ fun ProductThumb(imageUrl: String?, name: String, modifier: Modifier, corners: P
         contentAlignment = Alignment.Center,
     ) {
         Text(name.take(1).uppercase(), style = MaterialTheme.typography.headlineMedium, color = MaterialTheme.colorScheme.primary.copy(alpha = 0.5f))
+        if (underlayUrl != null) AsyncImage(
+            ImageRequest.Builder(context).data(offImage(underlayUrl, "400")).size(coil3.size.Size.ORIGINAL).build(),
+            contentDescription = null, contentScale = ContentScale.Crop, modifier = Modifier.fillMaxSize(),
+        )
         if (imageUrl != null) {
             var loaded by remember(imageUrl) { mutableStateOf(false) }
             var fullLoaded by remember(imageUrl) { mutableStateOf(false) }

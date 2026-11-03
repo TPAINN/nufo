@@ -369,4 +369,5 @@
     <string name="reason_sugar_medium">Μέτρια σάκχαρα</string>
     <string name="reason_salt_medium">Μέτριο αλάτι</string>
     <string name="reason_satfat_medium">Μέτρια κορεσμένα λιπαρά</string>
+    <string name="photo_illustrative">Ενδεικτική φωτογραφία</string>
 </resources>

@@ -35,13 +35,25 @@ class FoodApi(
         }
         .build(),
 ) {
-    private suspend fun get(url: String): JsonObject = withContext(Dispatchers.IO) {
-        client.newCall(Request.Builder().url(url).build()).execute().use { res ->
-            if (res.code == 404) return@use JsonObject(emptyMap())
-            if (!res.isSuccessful) throw ApiException("HTTP ${res.code}")
-            Json.parseToJsonElement(res.body.string()).jsonObject
+    private suspend fun get(url: String, retried: Boolean = false): JsonObject {
+        val (code, body, retryAfter) = withContext(Dispatchers.IO) {
+            client.newCall(Request.Builder().url(url).build()).execute().use { res ->
+                Triple(res.code, if (res.isSuccessful) res.body.string() else null, res.header("Retry-After"))
+            }
         }
+        // Open Food Facts allows ~100 product reads a minute per IP; people behind a carrier or office IP share it.
+        // Waiting as long as it asks (capped) once beats showing "not responding" for a busy second.
+        if (code == 429 && !retried) {
+            kotlinx.coroutines.delay(retryDelayMs(retryAfter))
+            return get(url, retried = true)
+        }
+        if (code == 404) return JsonObject(emptyMap())
+        if (body == null) throw ApiException("HTTP $code")
+        return Json.parseToJsonElement(body).jsonObject
     }
+
+    /** Tag names never change between products ("en:milk" is always "Γάλα"): asked once per language per process. */
+    private val tagNames = TagNameCache()
 
     /**
      * Photo analysis uploads up to two photos and waits for a model (up to ~20 s on a slow connection): it gets its
@@ -84,14 +96,17 @@ class FoodApi(
 
     /** Tag id -> name in [lang] for one taxonomy ("allergens", "labels", ...). Best effort: failures give an empty map. */
     suspend fun taxonomyNames(type: String, tags: List<String>, lang: String): Map<String, String> {
-        if (tags.isEmpty()) return emptyMap()
-        val url = "$OFF/api/v2/taxonomy".toHttpUrl().newBuilder()
-            .addQueryParameter("tagtype", type)
-            .addQueryParameter("tags", tags.joinToString(","))
-            .addQueryParameter("lc", lang)
-            .addQueryParameter("fields", "name")
-            .build().toString()
-        return runCatching { OffParser.parseTaxonomy(get(url), lang) }.getOrDefault(emptyMap())
+        val missing = tags.filter { tagNames.get(lang, it) == null }
+        if (missing.isNotEmpty()) {
+            val url = "$OFF/api/v2/taxonomy".toHttpUrl().newBuilder()
+                .addQueryParameter("tagtype", type)
+                .addQueryParameter("tags", missing.joinToString(","))
+                .addQueryParameter("lc", lang)
+                .addQueryParameter("fields", "name")
+                .build().toString()
+            runCatching { OffParser.parseTaxonomy(get(url), lang) }.getOrNull()?.let { tagNames.putAll(lang, it) }
+        }
+        return tags.mapNotNull { t -> tagNames.get(lang, t)?.let { t to it } }.toMap()
     }
 
     /**
@@ -175,4 +190,14 @@ class FoodApi(
         const val OFF = "https://world.openfoodfacts.org"
         const val USER_AGENT = "Nufo/1.0 (contact@nufo.app)"
     }
+}
+
+/** Seconds from a Retry-After header, as milliseconds: 2 s when absent or unreadable, never more than 5 s. */
+internal fun retryDelayMs(retryAfter: String?): Long = ((retryAfter?.trim()?.toLongOrNull() ?: 2L).coerceIn(1L, 5L)) * 1000
+
+/** Thread-safe tag id -> display name, per language. */
+internal class TagNameCache {
+    private val names = java.util.concurrent.ConcurrentHashMap<String, String>()
+    fun get(lang: String, tag: String): String? = names["$lang|$tag"]
+    fun putAll(lang: String, map: Map<String, String>) = map.forEach { (tag, name) -> names["$lang|$tag"] = name }
 }

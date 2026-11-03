@@ -394,4 +394,5 @@
     <string name="reason_sugar_medium">Medium sugar</string>
     <string name="reason_salt_medium">Medium salt</string>
     <string name="reason_satfat_medium">Medium saturated fat</string>
+    <string name="photo_illustrative">Illustrative photo</string>
 </resources>
