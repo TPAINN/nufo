@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Benchmark build only (internal, release-like, debug-signed): seeds a sample meal week for screen recordings.
+     adb shell am broadcast -n com.nufo.app/.bench.SeedDiaryReceiver -->
+<manifest xmlns:android="http://schemas.android.com/apk/res/android">
+    <application>
+        <receiver android:name=".bench.SeedDiaryReceiver" android:exported="true" />
+    </application>
+</manifest>

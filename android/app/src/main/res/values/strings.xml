@@ -395,4 +395,11 @@
     <string name="reason_salt_medium">Medium salt</string>
     <string name="reason_satfat_medium">Medium saturated fat</string>
     <string name="photo_illustrative">Illustrative photo</string>
+    <string name="history_tab_search">Search</string>
+    <string name="history_tab_meals">Meals</string>
+    <string name="meals_empty_title">No plates yet</string>
+    <string name="meals_empty_body">Photograph a plate and it is kept here by day, with its photo, on this phone only.</string>
+    <string name="meals_photo">Photograph a plate</string>
+    <string name="day_today">Today</string>
+    <string name="day_yesterday">Yesterday</string>
 </resources>

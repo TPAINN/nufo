@@ -47,12 +47,17 @@ data class Product(
     val novaFromLabel: Boolean = false,
     /** A generic picture of the food (not this package), shown when the product has no photo of its own. */
     val illustrationUrl: String? = null,
+    /** Set when the user photographs a plate: when it was eaten, and what keeps two plates of the same dish apart. */
+    val mealId: Long? = null,
 ) {
     /** What to show: the product's own photo, else the illustrative picture its search result showed. */
     val photoUrl: String? get() = imageUrl ?: illustrationUrl
 
-    /** Stable key for history: barcode when known, otherwise source + name. */
-    val key: String get() = barcode ?: "$source:$name"
+    /**
+     * Stable key for history: barcode when known, a photographed plate's own id, otherwise source + name. Plates saved
+     * before meal ids keep source + name, so they can still be removed.
+     */
+    val key: String get() = barcode ?: mealId?.let { "meal:$it" } ?: "$source:$name"
 
     fun tagName(tag: String, lang: String): String = tagNames[tag] ?: TagNames.fallback(tag, lang) ?: prettyTag(tag)
 }

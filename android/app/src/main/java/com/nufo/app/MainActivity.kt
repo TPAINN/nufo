@@ -301,7 +301,8 @@ private fun NufoNav(vm: NufoViewModel, startOnWelcome: Boolean) {
             }
             composable(Routes.HISTORY) {
                 Box(Modifier.padding(bottom = bottomInset.value)) { CompositionLocalProvider(LocalNavScope provides this@composable) {
-                    HistoryScreen(vm, onOpen = { vm.openProduct(it); nav.navigate(Routes.RESULT) }, onScan = { nav.navigate(Routes.SCANNER) })
+                    HistoryScreen(vm, onOpen = { vm.openProduct(it); nav.navigate(Routes.RESULT) }, onScan = { nav.navigate(Routes.SCANNER) },
+                        onPhoto = { nav.navigate(Routes.photo("camera")) })
                 } }
             }
             composable(Routes.SETTINGS) { Box(Modifier.padding(bottom = bottomInset.value)) { SettingsScreen(vm) } }

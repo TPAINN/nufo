@@ -284,7 +284,9 @@ class NufoViewModel(app: Application, private val saved: SavedStateHandle) : And
         openWithPhoto(meal.toProduct(dataLang(), brand), photo)
     }
 
-    private fun openWithPhoto(product: Product, photo: android.graphics.Bitmap?) {
+    private fun openWithPhoto(dish: Product, photo: android.graphics.Bitmap?) {
+        // A plate with the user's photo is a meal in the diary: its own id, so the same dish on another day is kept too.
+        val product = if (photo != null) dish.copy(mealId = System.currentTimeMillis()) else dish
         openProduct(product)
         // The user's own photo becomes the image once it is stored (off the main thread).
         viewModelScope.launch {
