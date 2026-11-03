@@ -23,3 +23,10 @@ fun Context.onlineFlow(): Flow<Boolean> = callbackFlow {
     cm.registerDefaultNetworkCallback(callback)
     awaitClose { cm.unregisterNetworkCallback(callback) }
 }.distinctUntilChanged()
+/**
+ * True only when the request never reached the internet (no DNS, no route, connection refused). A timeout on a slow
+ * network or an HTTP error from a busy server is a different problem: telling the user to "connect to the internet"
+ * while they are online sends them to fix the wrong thing.
+ */
+fun java.io.IOException.meansOffline(): Boolean =
+    this is java.net.UnknownHostException || this is java.net.ConnectException || this is java.net.NoRouteToHostException

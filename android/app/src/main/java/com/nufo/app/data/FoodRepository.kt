@@ -83,7 +83,7 @@ class FoodRepository(
             Lookup.NotFound(api.identify(barcode))
         }
     } catch (e: IOException) {
-        saved(barcode) ?: Lookup.Failed(e.message ?: "Network error", offline = true)
+        saved(barcode) ?: Lookup.Failed(e.message ?: "Network error", offline = e.meansOffline())
     } catch (e: CancellationException) {
         throw e
     } catch (e: Exception) {
@@ -120,7 +120,7 @@ class FoodRepository(
         val table = async(kotlinx.coroutines.Dispatchers.Default) { if (filters.needsOffTags) emptyList() else foods.search(q) }
         val offResult = off.await()
         offResult.exceptionOrNull()?.let { android.util.Log.w("Nufo", "Open Food Facts search failed", it) }
-        val offline = offResult.exceptionOrNull() is IOException
+        val offline = (offResult.exceptionOrNull() as? IOException)?.meansOffline() == true
         val hits = (offResult.getOrDefault(emptyList()) + table.await() + (if (offline) searchSaved(q) else emptyList()))
             .filter(filters::accepts)
         if (offResult.isFailure && !offline && hits.isEmpty()) return@withContext Result.failure(offResult.exceptionOrNull()!!)
