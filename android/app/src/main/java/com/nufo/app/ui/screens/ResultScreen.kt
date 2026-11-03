@@ -1,5 +1,6 @@
 package com.nufo.app.ui.screens
 
+import com.nufo.app.ui.components.NufoToastHost
 import androidx.compose.material.icons.outlined.DocumentScanner
 import com.nufo.app.data.missingLabelFacts
 import kotlin.math.roundToInt
@@ -13,7 +14,6 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.material3.SnackbarResult
 import androidx.compose.material3.SnackbarDuration
 import androidx.compose.material3.SnackbarHostState
-import androidx.compose.material3.SnackbarHost
 import com.nufo.app.ui.PhotoCorners
 import androidx.compose.foundation.layout.fillMaxHeight
 import com.nufo.app.data.RecipePart
@@ -250,7 +250,7 @@ fun ResultScreen(vm: NufoViewModel, onBack: () -> Unit, onSearch: (String) -> Un
             }
         }
     }
-    SnackbarHost(snackbar, Modifier.align(Alignment.BottomCenter).navigationBarsPadding().padding(16.dp))
+    NufoToastHost(snackbar, Modifier.align(Alignment.BottomCenter).navigationBarsPadding().padding(16.dp))
     }
 }
 

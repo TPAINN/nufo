@@ -1,5 +1,7 @@
 package com.nufo.app.ui.screens
 
+import androidx.compose.foundation.layout.heightIn
+import com.nufo.app.ui.components.NufoToastHost
 import com.nufo.app.ui.theme.Motion
 import androidx.compose.animation.togetherWith
 import androidx.compose.animation.fadeOut
@@ -34,7 +36,6 @@ import androidx.compose.material3.Button
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.SnackbarDuration
-import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.SnackbarResult
 import androidx.compose.material3.SwipeToDismissBox
@@ -93,7 +94,9 @@ fun HistoryScreen(vm: NufoViewModel, onOpen: (Product) -> Unit, onScan: () -> Un
 
     Box(Modifier.fillMaxSize()) {
         Column(Modifier.fillMaxSize().statusBarsPadding()) {
-            Row(Modifier.fillMaxWidth().padding(start = 20.dp, end = 8.dp, top = 16.dp, bottom = 4.dp), verticalAlignment = Alignment.CenterVertically) {
+            // Fixed height: "Clear all" sets the row's height, so when it faded out the title (and the screen below it)
+            // jumped up a few pixels in one frame.
+            Row(Modifier.fillMaxWidth().padding(start = 20.dp, end = 8.dp, top = 16.dp, bottom = 4.dp).heightIn(min = 48.dp), verticalAlignment = Alignment.CenterVertically) {
                 Text(stringResource(R.string.history_title), style = MaterialTheme.typography.headlineMedium, modifier = Modifier.weight(1f))
                 AnimatedVisibility(history.isNotEmpty(), enter = fadeIn(Motion.fadeInSpec()), exit = fadeOut(Motion.fadeOutSpec())) {
                     TextButton({ confirmClear = true }) { Text(stringResource(R.string.history_clear_all)) }
@@ -136,7 +139,7 @@ fun HistoryScreen(vm: NufoViewModel, onOpen: (Product) -> Unit, onScan: () -> Un
             }
 
         }
-        SnackbarHost(snackbar, Modifier.align(Alignment.BottomCenter).padding(16.dp))
+        NufoToastHost(snackbar, Modifier.align(Alignment.BottomCenter).padding(16.dp))
     }
 
     if (confirmClear) AlertDialog(
