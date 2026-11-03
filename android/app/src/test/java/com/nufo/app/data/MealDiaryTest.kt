@@ -85,4 +85,28 @@ class MealDiaryTest {
     @Test fun `no meals gives no days`() {
         assertTrue(mealDays(emptyList(), zone).isEmpty())
     }
+
+    @Test fun `a plate whose photo was not stored is not a meal`() {
+        assertFalse(product("Σαλάτα", at(today, 13), photo = null).isMeal)
+    }
+
+    @Test fun `a day with no known calories has no total`() {
+        // Arrange
+        val history = listOf(product("Σαλάτα", at(today, 13), grams = null))
+        // Act
+        val day = mealDays(history, zone).single()
+        // Assert
+        assertEquals(null, day.kcal)
+    }
+
+    @Test fun `plates saved before meal ids existed are dated when they were saved`() {
+        // Arrange: a dish-table plate carries the USDA publication date, not the meal's
+        val saved = at(today, 20)
+        val old = product("Μουσακάς", at(LocalDate.of(2019, 4, 1), 0), mealId = null)
+        // Act
+        val dated = old.inDiary(saved)
+        // Assert
+        assertEquals(saved, dated.lastUpdated)
+        assertEquals(old, old.copy(mealId = 5).inDiary(saved).copy(mealId = null)) // a meal with an id keeps its own time
+    }
 }

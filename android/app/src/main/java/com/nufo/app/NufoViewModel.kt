@@ -8,6 +8,7 @@ import com.nufo.app.BuildConfig
 import com.nufo.app.data.AppUpdate
 import com.nufo.app.data.Diet
 import com.nufo.app.data.Identified
+import com.nufo.app.data.isMeal
 import com.nufo.app.data.Lookup
 import com.nufo.app.data.OffParser
 import com.nufo.app.data.PriceReport
@@ -286,7 +287,7 @@ class NufoViewModel(app: Application, private val saved: SavedStateHandle) : And
 
     private fun openWithPhoto(dish: Product, photo: android.graphics.Bitmap?) {
         // A plate with the user's photo is a meal in the diary: its own id, so the same dish on another day is kept too.
-        val product = if (photo != null) dish.copy(mealId = System.currentTimeMillis()) else dish
+        val product = if (photo != null) System.currentTimeMillis().let { now -> dish.copy(mealId = now, lastUpdated = now) } else dish
         openProduct(product)
         // The user's own photo becomes the image once it is stored (off the main thread).
         viewModelScope.launch {
@@ -365,6 +366,14 @@ class NufoViewModel(app: Application, private val saved: SavedStateHandle) : And
     }
     fun delete(p: Product) = viewModelScope.launch { repo.delete(p) }
     fun restore(p: Product) = viewModelScope.launch { repo.save(p) }
+
+    /** A removed plate's photo goes once its Undo has passed, unless the same photo is still in the history. */
+    fun discardPhoto(p: Product) = viewModelScope.launch {
+        val photos = java.io.File(getApplication<android.app.Application>().filesDir, "photos")
+        val file = p.imageUrl?.takeIf { p.isMeal }?.let { android.net.Uri.parse(it).path }?.let { java.io.File(it) } ?: return@launch
+        if (file.parentFile != photos || history.value.orEmpty().any { it.imageUrl == p.imageUrl }) return@launch
+        withContext(Dispatchers.IO) { file.delete() }
+    }
     fun clearHistory() = viewModelScope.launch {
         repo.clearHistory()
         // Photographed plates are part of the history: they go too.

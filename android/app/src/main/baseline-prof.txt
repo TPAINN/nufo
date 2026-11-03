@@ -1,0 +1,5 @@
+# Nufo's own code, compiled ahead of time at install (ProfileInstaller applies it to sideloaded APKs too).
+# Without it, the first open of each screen runs interpreted and its transition starts with one long frame.
+# Compose and the other libraries ship their own profiles; this file covers only the app package.
+HSPLcom/nufo/app/**->**(**)**
+Lcom/nufo/app/**;

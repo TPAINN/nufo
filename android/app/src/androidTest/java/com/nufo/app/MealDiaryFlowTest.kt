@@ -3,6 +3,7 @@ package com.nufo.app
 import androidx.compose.ui.test.junit4.createEmptyComposeRule
 import androidx.compose.ui.test.onAllNodesWithText
 import androidx.compose.ui.test.onFirst
+import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performTouchInput
@@ -89,7 +90,8 @@ class MealDiaryFlowTest {
 
         // Assert: today first, with its total (410 + 550 kcal), then yesterday
         rule.waitUntil(10_000) { seen(s(R.string.day_today)) }
-        rule.onNodeWithText("960 kcal", substring = true).assertExists()
+        // The total is rolling digits, read out as one content description.
+        rule.onNodeWithContentDescription("960 kcal").assertExists()
         rule.onNodeWithText("Σολομός με λαχανικά").assertExists()
         rule.onNodeWithText(s(R.string.day_yesterday)).assertExists()
         rule.onNodeWithText("Σολομός με λαχανικά").performClick()
@@ -118,6 +120,7 @@ class MealDiaryFlowTest {
         Thread.sleep(2_000)
         rule.waitForIdle()
         rule.onNodeWithText("Ομελέτα με λουκάνικο").assertExists()
-        rule.onNodeWithText("960 kcal", substring = true).assertExists()
+        // The total is rolling digits, read out as one content description.
+        rule.onNodeWithContentDescription("960 kcal").assertExists()
     }
 }

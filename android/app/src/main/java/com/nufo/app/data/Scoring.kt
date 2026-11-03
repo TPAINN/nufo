@@ -119,9 +119,11 @@ fun dietNote(p: Product, diet: Diet): Pair<DietNote, Double?>? {
     val animal = setOf("en:milk", "en:eggs", "en:fish", "en:crustaceans", "en:molluscs")
     val seafood = setOf("en:fish", "en:crustaceans", "en:molluscs")
     // Meat is not an allergen, so its categories must be checked too ("meat-analogues" are plant-based).
+    // Whole first words only: "en:hamburger-buns" is not ham, "en:meat-free-sausages" is not meat.
+    val meatWords = setOf("meat", "meats", "poultry", "poultries", "ham", "hams", "sausage", "sausages", "fishes", "seafood", "charcuterie")
     val meat = p.categoryTags.any { t ->
-        !t.contains("analogue") && !t.contains("substitute") &&
-            listOf("en:meat", "en:poultr", "en:ham", "en:sausage", "en:fishes", "en:seafood", "en:charcuterie").any { t.startsWith(it) }
+        listOf("analogue", "substitute", "free", "vegan", "vegetarian", "plant").none { it in t } &&
+            t.startsWith("en:") && t.removePrefix("en:").substringBefore('-') in meatWords
     }
     return when (diet) {
         Diet.Vegan -> if ("en:vegan" !in p.labelTags && (meat || p.allergenTags.any { it in animal })) DietNote.NotVegan to null else null

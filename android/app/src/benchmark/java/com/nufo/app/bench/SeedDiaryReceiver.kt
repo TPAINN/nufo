@@ -38,6 +38,7 @@ class SeedDiaryReceiver : BroadcastReceiver() {
         val app = context.applicationContext as NufoApp
         val done = goAsync()
         CoroutineScope(Dispatchers.IO).launch {
+            try {
             val photos = File(app.filesDir, "photos").apply { mkdirs() }
             for (p in week) {
                 val time = LocalDate.now().minusDays(p.daysAgo).atTime(LocalTime.of(p.h, p.m)).atZone(ZoneId.systemDefault()).toInstant().toEpochMilli()
@@ -51,7 +52,7 @@ class SeedDiaryReceiver : BroadcastReceiver() {
                     lastUpdated = time, isDish = true, mealId = time, recipe = p.foods.map { RecipePart(it, 100.0 / p.foods.size) },
                 ))
             }
-            done.finish()
+            } finally { done.finish() }
         }
     }
 }

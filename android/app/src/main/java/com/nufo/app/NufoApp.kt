@@ -29,6 +29,9 @@ class NufoApp : Application(), SingletonImageLoader.Factory {
         // Open the database now, in parallel with activity creation, so history is ready by the end of the
         // opening beat instead of when the first screen first asks for it.
         thread(name = "db-warmup") { db.openHelper.writableDatabase }
+        // Built lazily on the main thread by the first image on screen, the loader froze that screen's transition
+        // for ~200 ms (seen as a stuck pill thumb when the Meals tab first opened): build it here, off the main thread.
+        thread(name = "image-warmup") { SingletonImageLoader.get(this) }
     }
 
     // The Open Food Facts image CDN can take well over 10 s per photo, so allow more time than

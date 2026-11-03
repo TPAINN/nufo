@@ -82,10 +82,12 @@ fun CalligraphNumber(
     modifier: Modifier = Modifier,
     style: TextStyle = LocalTextStyle.current,
     color: Color = Color.Unspecified,
+    countUp: Boolean = true,
 ) {
     val reduce = LocalReduceMotion.current
-    // Start every digit at 0 so numbers count up into place on first appearance.
-    var shown by remember { mutableStateOf(if (reduce) value else value.map { if (it.isDigit()) '0' else it }.joinToString("")) }
+    // Start every digit at 0 so numbers count up into place on first appearance. Not in lists, where an item
+    // scrolled back into view would count up again: there only a change of value rolls.
+    var shown by remember { mutableStateOf(if (reduce || !countUp) value else value.map { if (it.isDigit()) '0' else it }.joinToString("")) }
     LaunchedEffect(value) { shown = value }
     Row(modifier.clearAndSetSemantics { contentDescription = value }, verticalAlignment = Alignment.Bottom) {
         shown.forEachIndexed { i, ch ->

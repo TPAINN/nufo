@@ -348,7 +348,9 @@ fun ProductThumb(
             // One decoded 400 px bitmap for every place this photo appears: a list thumbnail and the hero that
             // opens from it share the memory-cache entry, so the photo is there from the first frame of the push.
             val request = remember(imageUrl, attempt) {
-                ImageRequest.Builder(context).data(offImage(imageUrl, "400")).size(coil3.size.Size.ORIGINAL).crossfade(220).build()
+                ImageRequest.Builder(context).data(offImage(imageUrl, "400")).size(coil3.size.Size.ORIGINAL).crossfade(220)
+                    // Coil skips a request equal to the last one: a retry must differ, or it never reloads.
+                    .apply { if (attempt > 0) memoryCacheKeyExtra("retry", "$attempt") }.build()
             }
             AsyncImage(
                 request,

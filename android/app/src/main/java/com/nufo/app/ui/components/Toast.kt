@@ -88,12 +88,12 @@ fun NufoToastHost(state: SnackbarHostState, modifier: Modifier = Modifier) {
         contentAlignment = Alignment.BottomCenter,
         label = "toast",
         modifier = modifier,
-    ) { d -> if (d != null) NufoToast(d, onAction = { undone = true; d.performAction() }) else Box(Modifier.fillMaxWidth()) }
+    ) { d -> if (d != null) NufoToast(d, live = d === state.currentSnackbarData, onAction = { undone = true; d.performAction() }) else Box(Modifier.fillMaxWidth()) }
     LaunchedEffect(data) { if (data != null) undone = false }
 }
 
 @Composable
-private fun NufoToast(data: SnackbarData, onAction: () -> Unit) {
+private fun NufoToast(data: SnackbarData, live: Boolean, onAction: () -> Unit) {
     val colors = LocalNufoColors.current
     val shape = RoundedCornerShape(18.dp)
     val action = data.visuals.actionLabel
@@ -112,7 +112,8 @@ private fun NufoToast(data: SnackbarData, onAction: () -> Unit) {
         Spacer(Modifier.width(12.dp))
         Text(data.visuals.message, style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurface,
             maxLines = 2, modifier = Modifier.weight(1f).padding(vertical = 12.dp))
-        if (action != null) TextButton(onAction) {
+        // Once it has timed out and is sinking away, Undo would do nothing: it stops taking taps instead of lying.
+        if (action != null) TextButton(onAction, enabled = live) {
             Text(action, style = MaterialTheme.typography.labelLarge, color = MaterialTheme.colorScheme.primary)
         } else Spacer(Modifier.width(8.dp))
     }

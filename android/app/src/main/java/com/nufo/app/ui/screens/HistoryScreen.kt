@@ -56,6 +56,7 @@ import androidx.compose.material3.TextButton
 import androidx.compose.material3.rememberSwipeToDismissBoxState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.produceState
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
@@ -78,6 +79,7 @@ import com.nufo.app.ui.displayName
 import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
 import com.nufo.app.data.Product
+import com.nufo.app.ui.components.CalligraphNumber
 import com.nufo.app.ui.components.NufoCard
 import com.nufo.app.ui.components.enterStagger
 import com.nufo.app.ui.components.fmt
@@ -104,7 +106,7 @@ fun HistoryScreen(vm: NufoViewModel, onOpen: (Product) -> Unit, onScan: () -> Un
     fun remove(p: Product) {
         vm.delete(p)
         scope.launch {
-            if (snackbar.showSnackbar(removedFmt.replace("%s", p.name), undo, duration = SnackbarDuration.Short) == SnackbarResult.ActionPerformed) vm.restore(p)
+            if (snackbar.showSnackbar(removedFmt.replace("%s", p.name), undo, duration = SnackbarDuration.Short) == SnackbarResult.ActionPerformed) vm.restore(p) else vm.discardPhoto(p)
         }
     }
 
@@ -254,7 +256,14 @@ private fun SwipeRow(p: Product, onOpen: () -> Unit, onDelete: () -> Unit, modif
 /** The meal diary: a section per day ("Σήμερα", the date quieter beside it), newest first. */
 @Composable
 private fun MealDays(days: List<MealDay>, onOpen: (Product) -> Unit, onRemove: (Product) -> Unit) {
-    val today = remember { java.time.LocalDate.now() }
+    // Ticks over at midnight, so "Σήμερα" and "Χθες" stay right with the screen left open.
+    val today by produceState(java.time.LocalDate.now()) {
+        while (true) {
+            val untilMidnight = java.time.Duration.between(java.time.LocalDateTime.now(), value.plusDays(1).atStartOfDay()).toMillis()
+            kotlinx.coroutines.delay(untilMidnight.coerceAtLeast(0) + 1_000)
+            value = java.time.LocalDate.now()
+        }
+    }
     LazyColumn(contentPadding = PaddingValues(20.dp, 12.dp, 20.dp, 24.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
         days.forEachIndexed { di, day ->
             item(key = "day-${day.date}") {
@@ -283,7 +292,9 @@ private fun DayHeader(day: MealDay, today: java.time.LocalDate, modifier: Modifi
         Spacer(Modifier.width(8.dp))
         Text(date, style = MaterialTheme.typography.labelMedium, color = LocalNufoColors.current.textSecondary,
             modifier = Modifier.padding(bottom = 3.dp).weight(1f))
-        Text("${day.kcal} kcal", style = MaterialTheme.typography.labelLarge, color = LocalNufoColors.current.textSecondary)
+        // Rolls to the new total when a plate is removed or restored, instead of snapping.
+        if (day.kcal != null) CalligraphNumber("${day.kcal} kcal", style = MaterialTheme.typography.labelLarge,
+            color = LocalNufoColors.current.textSecondary, countUp = false)
     }
 }
 

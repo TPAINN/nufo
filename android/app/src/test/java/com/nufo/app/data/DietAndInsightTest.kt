@@ -56,6 +56,15 @@ class DietAndInsightTest {
         assertNull(dietNote(product(categories = listOf("en:meat-analogues", "en:plant-based-foods")), Diet.Vegetarian))
     }
 
+    @Test fun `words that only start like meat are not meat`() {
+        // Arrange: a bun is not ham, a meat-free sausage is not meat
+        val buns = product(categories = listOf("en:breads", "en:hamburger-buns"))
+        val meatFree = product(categories = listOf("en:meat-free-sausages"))
+        // Act + Assert
+        assertNull(dietNote(buns, Diet.Vegan))
+        assertNull(dietNote(meatFree, Diet.Vegetarian))
+    }
+
     @Test fun `keto and low sodium report the amount`() {
         val bread = product(Nutrition(carbs = 48.0, salt = 1.2))
         assertEquals(DietNote.HighCarbsKeto to 48.0, dietNote(bread, Diet.Keto))

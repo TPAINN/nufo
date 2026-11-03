@@ -36,9 +36,10 @@ class FoodApi(
         .build(),
 ) {
     private suspend fun get(url: String, retried: Boolean = false): JsonObject {
-        val (code, body, retryAfter) = withContext(Dispatchers.IO) {
+        // Parsed off the main thread too: product responses can be large, and lookups start from viewModelScope.
+        val (code, json, retryAfter) = withContext(Dispatchers.IO) {
             client.newCall(Request.Builder().url(url).build()).execute().use { res ->
-                Triple(res.code, if (res.isSuccessful) res.body.string() else null, res.header("Retry-After"))
+                Triple(res.code, if (res.isSuccessful) Json.parseToJsonElement(res.body.string()).jsonObject else null, res.header("Retry-After"))
             }
         }
         // Open Food Facts allows ~100 product reads a minute per IP; people behind a carrier or office IP share it.
@@ -48,8 +49,7 @@ class FoodApi(
             return get(url, retried = true)
         }
         if (code == 404) return JsonObject(emptyMap())
-        if (body == null) throw ApiException("HTTP $code")
-        return Json.parseToJsonElement(body).jsonObject
+        return json ?: throw ApiException("HTTP $code")
     }
 
     /** Tag names never change between products ("en:milk" is always "Γάλα"): asked once per language per process. */

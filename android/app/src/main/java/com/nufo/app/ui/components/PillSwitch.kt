@@ -46,7 +46,7 @@ fun PillSwitch(options: List<String>, selected: Int, onSelect: (Int) -> Unit, mo
     val segment = with(density) { (inner / options.size).toDp() }
     val x by animateDpAsState(segment * selected, nufoSpring(), label = "pillThumb")
     Box(
-        modifier.fillMaxWidth().height(48.dp).clip(RoundedCornerShape(50)).background(LocalNufoColors.current.card)
+        modifier.fillMaxWidth().height(56.dp).clip(RoundedCornerShape(50)).background(LocalNufoColors.current.card)
             .padding(4.dp).onSizeChanged { inner = it.width },
     ) {
         Box(Modifier.offset(x = x).width(segment).fillMaxHeight().clip(RoundedCornerShape(50)).background(MaterialTheme.colorScheme.primary))

@@ -141,6 +141,10 @@ fun GradeScale(
     // TalkBack always hears which scale this is: "Nutri-Score C. <meaning>" or "Nutri-Score, not available".
     val na = stringResource(R.string.not_available)
     val spoken = if (active == null) "$title, $na" else listOfNotNull("$title ${active.uppercase()}", description).joinToString(". ")
+    // Seven Green-Score grades must still fit a 360 dp phone inside a card: narrower segments for long scales.
+    val wide = values.size <= 5
+    val segW = if (wide) 26.dp else 22.dp
+    val activeW = if (wide) 34.dp else 30.dp
     Column(modifier.clearAndSetSemantics { contentDescription = spoken }) {
         Row(verticalAlignment = Alignment.CenterVertically) {
             Text(title, style = MaterialTheme.typography.labelLarge, modifier = Modifier.width(92.dp))
@@ -150,10 +154,10 @@ fun GradeScale(
             ) {
                 values.forEachIndexed { i, v ->
                     val isActive = v.equals(active, ignoreCase = true)
-                    val size by animateDpAsState(if (isActive) 34.dp else 24.dp, nufoSpring(), label = "seg")
+                    val size by animateDpAsState(if (isActive) activeW else 24.dp, nufoSpring(), label = "seg")
                     val bg by animateColorAsState(if (active == null) muted else colorOf(v).copy(alpha = if (isActive) 1f else 0.22f), label = "segBg")
                     Box(
-                        Modifier.padding(horizontal = 1.dp).size(width = if (isActive) 34.dp else 26.dp, height = size)
+                        Modifier.padding(horizontal = 1.dp).size(width = if (isActive) activeW else segW, height = size)
                             .clip(RoundedCornerShape(if (isActive) 10.dp else 6.dp)).background(bg)
                             .then(if (isActive) Modifier.border(2.dp, Color.White, RoundedCornerShape(10.dp)) else Modifier),
                         contentAlignment = Alignment.Center,
@@ -167,10 +171,14 @@ fun GradeScale(
                     }
                 }
             }
-            if (active == null) {
+            if (active == null && wide) {
                 Spacer(Modifier.width(10.dp))
                 Text(stringResource(R.string.not_available), style = MaterialTheme.typography.labelMedium, color = LocalNufoColors.current.textSecondary)
             }
+        }
+        if (active == null && !wide) {
+            Text(stringResource(R.string.not_available), style = MaterialTheme.typography.labelMedium, color = LocalNufoColors.current.textSecondary,
+                modifier = Modifier.padding(start = 92.dp, top = 4.dp))
         }
         if (description != null && active != null) {
             Text(description, style = MaterialTheme.typography.bodySmall, color = LocalNufoColors.current.textSecondary,

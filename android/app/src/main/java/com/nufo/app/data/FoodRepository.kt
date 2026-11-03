@@ -50,7 +50,7 @@ class FoodRepository(
     private fun encode(p: Product) = json.encodeToString(Product.serializer(), p)
 
     /** Null until the database has answered once, so screens can show loading instead of a false "empty". */
-    val history = dao.all().map { rows -> rows.mapNotNull { decode(it.json) } }
+    val history = dao.all().map { rows -> rows.mapNotNull { r -> decode(r.json)?.inDiary(r.savedAt) } }
 
     /**
      * Barcode pipeline: Open Food Facts, then USDA branded foods by UPC, then UPCitemdb for a name only.
@@ -148,7 +148,7 @@ class FoodRepository(
         val offResult = off.await()
         offResult.exceptionOrNull()?.let { android.util.Log.w("Nufo", "Open Food Facts search failed", it) }
         val offline = (offResult.exceptionOrNull() as? IOException)?.meansOffline() == true
-        val hits = (offResult.getOrDefault(emptyList()) + table.await() + (if (offline) searchSaved(q) else emptyList()))
+        val hits = (offResult.getOrDefault(emptyList()) + table.await() + (if (offResult.isFailure) searchSaved(q) else emptyList()))
             .filter(filters::accepts)
         if (offResult.isFailure && !offline && hits.isEmpty()) return@withContext Result.failure(offResult.exceptionOrNull()!!)
         val ranked = SmartSearch.rank(hits, q)
