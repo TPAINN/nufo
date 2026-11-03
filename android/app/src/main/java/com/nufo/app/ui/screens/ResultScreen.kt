@@ -799,7 +799,7 @@ private fun DeclarationRow(r: DeclRow, twoColumns: Boolean) {
     val label = stringResource(r.label)
     Row(
         Modifier.fillMaxWidth().padding(vertical = 10.dp)
-            .clearAndSetSemantics { contentDescription = listOfNotNull(label, cell(r.per100), levelText).joinToString(", ") },
+            .clearAndSetSemantics { contentDescription = listOfNotNull(label, cell(r.per100), cell(r.scaled).takeIf { twoColumns }, levelText).joinToString(", ") },
         verticalAlignment = Alignment.CenterVertically,
     ) {
         Row(Modifier.weight(1f).padding(start = if (r.indent) 14.dp else 0.dp), verticalAlignment = Alignment.CenterVertically) {
@@ -811,10 +811,10 @@ private fun DeclarationRow(r: DeclRow, twoColumns: Boolean) {
             r.level?.let { Spacer(Modifier.width(8.dp)); LevelDot(it) }
         }
         Text(cell(r.per100), style = MaterialTheme.typography.bodyMedium, textAlign = TextAlign.End, modifier = Modifier.width(84.dp))
-        if (twoColumns) Text(
-            cell(r.scaled), style = MaterialTheme.typography.bodyMedium.copy(fontWeight = FontWeight.SemiBold),
-            textAlign = TextAlign.End, modifier = Modifier.width(92.dp),
-        )
+        // The portion column follows the portion stepper, so its digits roll instead of swapping.
+        if (twoColumns) Box(Modifier.width(92.dp), contentAlignment = Alignment.CenterEnd) {
+            CalligraphNumber(cell(r.scaled), style = MaterialTheme.typography.bodyMedium.copy(fontWeight = FontWeight.SemiBold))
+        }
     }
 }
 

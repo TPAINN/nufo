@@ -343,7 +343,10 @@ class NufoViewModel(app: Application, private val saved: SavedStateHandle) : And
     private suspend fun runSearch() {
         val s = _search.value
         _search.update { it.copy(loading = true, error = null) }
-        val r = repo.search(s.query.trim(), s.filters, dataLang())
+        val r = repo.search(s.query.trim(), s.filters, dataLang()) { local ->
+            // Instant local matches while Open Food Facts loads; `loading` stays on until the full answer lands.
+            _search.update { it.copy(hits = local.hits, top = local.top, correction = local.correction) }
+        }
         _search.update {
             val outcome = r.getOrNull()
             it.copy(

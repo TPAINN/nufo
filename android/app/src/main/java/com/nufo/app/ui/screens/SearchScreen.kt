@@ -88,6 +88,8 @@ import com.nufo.app.ui.theme.gradeColor
 import com.nufo.app.ui.theme.novaColor
 import com.nufo.app.ui.theme.nufoSpring
 
+private fun hitKey(h: SearchHit) = "${h.source}:${h.barcode ?: h.name}"
+
 @Composable
 fun SearchScreen(vm: NufoViewModel, onOpen: (SearchHit) -> Unit, onBarcode: (String) -> Unit) {
     val s by vm.search.collectAsStateWithLifecycle()
@@ -203,8 +205,11 @@ fun SearchScreen(vm: NufoViewModel, onOpen: (SearchHit) -> Unit, onBarcode: (Str
                         }
                     }
                 }
-                val rest = if (s.top == null) s.hits else s.hits.filterNot { it === s.top }
-                itemsIndexed(rest, key = { i, h -> "${h.source}:${h.barcode ?: h.name}:$i" }) { i, h ->
+                // Keys are the hit's identity, never its position: when Open Food Facts results merge into the
+                // instant local ones, rows slide to their new place instead of being torn down and rebuilt.
+                val topKey = s.top?.let(::hitKey)
+                val rest = s.hits.distinctBy(::hitKey).filterNot { hitKey(it) == topKey }
+                itemsIndexed(rest, key = { _, h -> hitKey(h) }) { i, h ->
                     HitRow(h, { onOpen(h) }, Modifier.animateItem().enterStagger(i + 1))
                 }
             }

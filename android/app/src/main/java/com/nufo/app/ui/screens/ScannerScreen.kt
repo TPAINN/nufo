@@ -1,6 +1,14 @@
 package com.nufo.app.ui.screens
 
 
+import androidx.compose.animation.AnimatedContent
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.Crossfade
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.scaleIn
+import com.nufo.app.ui.theme.Motion
+import com.nufo.app.ui.theme.nufoSpring
 import android.Manifest
 import android.content.pm.PackageManager
 import android.os.Build
@@ -126,40 +134,46 @@ fun ScannerScreen(onBarcode: (String) -> Unit, onGallery: () -> Unit, onClose: (
     }
 
     Box(Modifier.fillMaxSize().background(Color.Black)) {
-        if (granted && cameraFailed) Column(
-            Modifier.align(Alignment.Center).padding(32.dp),
-            horizontalAlignment = Alignment.CenterHorizontally,
-        ) {
-            Text(stringResource(R.string.camera_error_title), color = Color.White, style = MaterialTheme.typography.titleMedium, textAlign = TextAlign.Center)
-            Spacer(Modifier.height(6.dp))
-            Text(stringResource(R.string.camera_error_body), color = Color.White.copy(0.7f), style = MaterialTheme.typography.bodyMedium, textAlign = TextAlign.Center)
-            Spacer(Modifier.height(18.dp))
-            Button(onClick = { manual = true }) { Text(stringResource(R.string.scan_type)) }
+        // Permission prompt, live camera and camera error cross-fade instead of popping.
+        val stage = when { granted && cameraFailed -> 2; granted -> 1; else -> 0 }
+        AnimatedContent(stage, transitionSpec = { Motion.crossfade() }, label = "scanStage") { st ->
+            Box(Modifier.fillMaxSize()) {
+                when (st) {
+                    2 -> Column(Modifier.align(Alignment.Center).padding(32.dp), horizontalAlignment = Alignment.CenterHorizontally) {
+                        Text(stringResource(R.string.camera_error_title), color = Color.White, style = MaterialTheme.typography.titleMedium, textAlign = TextAlign.Center)
+                        Spacer(Modifier.height(6.dp))
+                        Text(stringResource(R.string.camera_error_body), color = Color.White.copy(0.7f), style = MaterialTheme.typography.bodyMedium, textAlign = TextAlign.Center)
+                        Spacer(Modifier.height(18.dp))
+                        Button(onClick = { manual = true }) { Text(stringResource(R.string.scan_type)) }
+                    }
+                    1 -> {
+                        CameraPreview(onCamera = { camera = it }, onDetected = ::deliver, onError = { cameraFailed = true })
+                        // Brackets and laser only frame a live camera; over a prompt they collide with its text.
+                        ScanOverlay()
+                    }
+                    else -> Column(Modifier.align(Alignment.Center).padding(32.dp), horizontalAlignment = Alignment.CenterHorizontally) {
+                        Text(stringResource(R.string.scan_permission_title), color = Color.White, style = MaterialTheme.typography.titleMedium, textAlign = TextAlign.Center)
+                        Spacer(Modifier.height(6.dp))
+                        Text(stringResource(R.string.scan_permission_body), color = Color.White.copy(0.7f), style = MaterialTheme.typography.bodyMedium, textAlign = TextAlign.Center)
+                        Spacer(Modifier.height(18.dp))
+                        Button(onClick = { permission.launch(Manifest.permission.CAMERA) }) { Text(stringResource(R.string.scan_allow)) }
+                    }
+                }
+            }
         }
-        else if (granted) CameraPreview(onCamera = { camera = it }, onDetected = ::deliver, onError = { cameraFailed = true })
-        else Column(
-            Modifier.align(Alignment.Center).padding(32.dp),
-            horizontalAlignment = Alignment.CenterHorizontally,
-        ) {
-            Text(stringResource(R.string.scan_permission_title), color = Color.White, style = MaterialTheme.typography.titleMedium, textAlign = TextAlign.Center)
-            Spacer(Modifier.height(6.dp))
-            Text(stringResource(R.string.scan_permission_body), color = Color.White.copy(0.7f), style = MaterialTheme.typography.bodyMedium, textAlign = TextAlign.Center)
-            Spacer(Modifier.height(18.dp))
-            Button(onClick = { permission.launch(Manifest.permission.CAMERA) }) { Text(stringResource(R.string.scan_allow)) }
-        }
-
-        // Brackets and laser only frame a live camera; over a prompt they collide with its text.
-        if (granted && !cameraFailed) ScanOverlay()
 
         Row(
             Modifier.fillMaxWidth().statusBarsPadding().padding(16.dp),
             horizontalArrangement = Arrangement.SpaceBetween,
         ) {
             GlassButton(Icons.Outlined.Close, stringResource(R.string.scan_close), onClose)
-            if (camera?.cameraInfo?.hasFlashUnit() == true) {
-                GlassButton(if (torch) Icons.Outlined.FlashlightOn else Icons.Outlined.FlashlightOff, stringResource(if (torch) R.string.scan_flash_off else R.string.scan_flash_on)) {
-                    torch = !torch
-                    camera?.cameraControl?.enableTorch(torch)
+            // The torch button arrives once the camera reports a flash; it fades in rather than popping.
+            AnimatedVisibility(camera?.cameraInfo?.hasFlashUnit() == true, enter = fadeIn(Motion.fadeInSpec()) + scaleIn(nufoSpring(), 0.8f), exit = fadeOut(Motion.fadeOutSpec())) {
+                Crossfade(torch, animationSpec = Motion.fadeInSpec(), label = "torch") { on ->
+                    GlassButton(if (on) Icons.Outlined.FlashlightOn else Icons.Outlined.FlashlightOff, stringResource(if (on) R.string.scan_flash_off else R.string.scan_flash_on)) {
+                        torch = !torch
+                        camera?.cameraControl?.enableTorch(torch)
+                    }
                 }
             }
         }

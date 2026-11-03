@@ -1,6 +1,7 @@
 package com.nufo.app.data
 
 import kotlinx.coroutines.withContext
+import kotlinx.coroutines.ensureActive
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
@@ -113,11 +114,22 @@ class FoodRepository(
      */
     // Off the main thread: ranking every answer with phonetic keys cost several slow UI frames
     // right as results arrived (emulator gfxinfo, 2026-10-07).
-    suspend fun search(query: String, filters: SearchFilters, lang: String): Result<SearchOutcome> = withContext(kotlinx.coroutines.Dispatchers.Default) {
+    suspend fun search(
+        query: String, filters: SearchFilters, lang: String,
+        /** Called with the instant local answer (bundled table) while Open Food Facts is still loading. */
+        onLocal: (SearchOutcome) -> Unit = {},
+    ): Result<SearchOutcome> = withContext(kotlinx.coroutines.Dispatchers.Default) {
         val q = SmartSearch.understand(query)
         val off = async { runCatching { withTimeout(GIVE_UP_MS) { api.offSearch(q, filters, lang) } } }
         // Plain foods come from the USDA table bundled in the app: instant, offline, no API quota.
         val table = async(kotlinx.coroutines.Dispatchers.Default) { if (filters.needsOffTags) emptyList() else foods.search(q) }
+        // Show the table's matches at once instead of a spinner for up to 12 s on a slow connection.
+        val local = table.await().filter(filters::accepts)
+        if (local.isNotEmpty() && off.isActive) {
+            ensureActive() // a newer query cancelled this one: never flash its results
+            val ranked = SmartSearch.rank(local, q)
+            onLocal(SearchOutcome(ranked.hits.take(40), offline = false, top = ranked.top, correction = q.correction))
+        }
         val offResult = off.await()
         offResult.exceptionOrNull()?.let { android.util.Log.w("Nufo", "Open Food Facts search failed", it) }
         val offline = (offResult.exceptionOrNull() as? IOException)?.meansOffline() == true

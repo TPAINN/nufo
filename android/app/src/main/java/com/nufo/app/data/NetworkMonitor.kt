@@ -9,12 +9,15 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.callbackFlow
 import kotlinx.coroutines.flow.distinctUntilChanged
 
-/** Emits whether the device currently has a validated internet connection. */
+/**
+ * Emits whether the device has a network that can reach the internet. Android's VALIDATED flag is not required:
+ * it drops whenever its own check to Google fails (flaky Wi-Fi, some carriers, emulators) while requests to
+ * Open Food Facts still work, and the "offline" banner then lied. Real request failures are classified by
+ * [meansOffline] instead.
+ */
 fun Context.onlineFlow(): Flow<Boolean> = callbackFlow {
     val cm = getSystemService(ConnectivityManager::class.java)
-    fun online() = cm.getNetworkCapabilities(cm.activeNetwork)?.let {
-        it.hasCapability(NetworkCapabilities.NET_CAPABILITY_INTERNET) && it.hasCapability(NetworkCapabilities.NET_CAPABILITY_VALIDATED)
-    } ?: false
+    fun online() = cm.getNetworkCapabilities(cm.activeNetwork)?.hasCapability(NetworkCapabilities.NET_CAPABILITY_INTERNET) ?: false
     val callback = object : ConnectivityManager.NetworkCallback() {
         override fun onCapabilitiesChanged(network: Network, caps: NetworkCapabilities) { trySend(online()) }
         override fun onLost(network: Network) { trySend(online()) }

@@ -59,7 +59,7 @@ def walk(prefix: str) -> None:
     adb("shell", "input", "text", "yogurt")
     time.sleep(4)
     shot(f"{prefix}03-search")
-    adb("shell", "input", "keyevent", "111")  # hide keyboard
+    adb("shell", "input", "keyevent", "66")  # submit: clears focus so the UI dump can run
     rows = [n for n in nodes() if "kcal" in (n[0] + n[1]).lower()]
     if rows:
         adb("shell", "input", "tap", str(rows[0][2]), str(rows[0][3]))
