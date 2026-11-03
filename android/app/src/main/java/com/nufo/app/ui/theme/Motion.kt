@@ -10,6 +10,7 @@ import androidx.compose.animation.fadeOut
 import androidx.compose.animation.scaleIn
 import androidx.compose.animation.slideInHorizontally
 import androidx.compose.animation.slideOutHorizontally
+import androidx.compose.animation.slideOutVertically
 import androidx.compose.animation.togetherWith
 import androidx.compose.runtime.compositionLocalOf
 
@@ -48,6 +49,13 @@ object Motion {
     // Between peers (tabs, welcome → home): fade through, no direction implied.
     fun peerEnter(): EnterTransition = fadeIn(fadeInSpec(delay = FAST / 3)) + scaleIn(tween(BASE, easing = EaseOut), initialScale = 0.96f)
     fun peerExit(): ExitTransition = fadeOut(fadeOutSpec())
+
+    // Closing a full-screen camera (scanner, photo): black to light is the biggest contrast jump in the app. The
+    // standard 150 ms strong ease-out made it read as a cut (60 fps capture: 41 % of the change in one frame), so the
+    // camera sinks away on a longer, evenly paced fade while the screen beneath fades up (measured: 26 %).
+    private val Even = CubicBezierEasing(0.4f, 0f, 0.2f, 1f)
+    fun cameraExit(): ExitTransition = slideOutVertically(nufoSpring()) { it / 10 } + fadeOut(tween(300, easing = Even))
+    fun underCameraEnter(): EnterTransition = fadeIn(tween(300, easing = Even)) + scaleIn(tween(300, easing = Even), initialScale = 0.98f)
 
     /** Content swapping in place (loading → loaded, tabs inside a screen). */
     fun crossfade(): ContentTransform = fadeIn(fadeInSpec(delay = FAST / 3)) togetherWith fadeOut(fadeOutSpec())

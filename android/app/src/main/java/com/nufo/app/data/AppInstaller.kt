@@ -66,7 +66,7 @@ class AppInstaller(private val context: Context) {
     }
 
     /** Android 8+ asks once per app before it may install others; false until the user allows it. */
-    fun canInstall(): Boolean = Build.VERSION.SDK_INT < 26 || context.packageManager.canRequestPackageInstalls()
+    fun canInstall(): Boolean = context.packageManager.canRequestPackageInstalls()
 
     /** The system page where the user allows Nufo to install updates. */
     fun permissionIntent(): Intent =

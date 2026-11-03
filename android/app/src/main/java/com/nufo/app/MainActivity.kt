@@ -269,7 +269,13 @@ private fun NufoNav(vm: NufoViewModel, startOnWelcome: Boolean) {
             // everything else pushes, and back is the exact mirror of the push.
             enterTransition = { if (isPeerChange()) Motion.peerEnter() else Motion.pushEnter() },
             exitTransition = { if (isPeerChange()) Motion.peerExit() else Motion.pushExit() },
-            popEnterTransition = { if (isPeerChange()) Motion.peerEnter() else Motion.popEnter() },
+            popEnterTransition = {
+                when {
+                    initialState.destination.route in CAMERA_ROUTES -> Motion.underCameraEnter()
+                    isPeerChange() -> Motion.peerEnter()
+                    else -> Motion.popEnter()
+                }
+            },
             popExitTransition = { if (isPeerChange()) Motion.peerExit() else Motion.popExit() },
         ) {
             composable(Routes.WELCOME) {
@@ -299,7 +305,8 @@ private fun NufoNav(vm: NufoViewModel, startOnWelcome: Boolean) {
                 } }
             }
             composable(Routes.SETTINGS) { Box(Modifier.padding(bottom = bottomInset.value)) { SettingsScreen(vm) } }
-            composable(Routes.SCANNER) {
+            // Opening keeps the standard push (measured smoother); closing uses the even camera fade.
+            composable(Routes.SCANNER, popExitTransition = { Motion.cameraExit() }) {
                 ScannerScreen(
                     onBarcode = { code ->
                         vm.openBarcode(code)
@@ -309,7 +316,8 @@ private fun NufoNav(vm: NufoViewModel, startOnWelcome: Boolean) {
                     onClose = { nav.popBackStack() },
                 )
             }
-            composable(Routes.PHOTO) { e ->
+            // Opening keeps the standard push (measured smoother); closing uses the even camera fade.
+            composable(Routes.PHOTO, popExitTransition = { Motion.cameraExit() }) { e ->
                 PhotoScreen(
                     source = e.arguments?.getString("source") ?: "camera",
                     onBarcode = { code ->
@@ -351,6 +359,8 @@ private fun NufoNav(vm: NufoViewModel, startOnWelcome: Boolean) {
 }
 
 private val PEERS = TABS.map { it.route } + Routes.WELCOME
+
+private val CAMERA_ROUTES = setOf(Routes.SCANNER, Routes.PHOTO)
 
 private fun AnimatedContentTransitionScope<NavBackStackEntry>.isPeerChange() =
     initialState.destination.route in PEERS && targetState.destination.route in PEERS

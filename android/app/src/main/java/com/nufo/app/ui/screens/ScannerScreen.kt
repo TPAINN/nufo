@@ -231,7 +231,12 @@ private fun CameraPreview(onCamera: (Camera) -> Unit, onDetected: (String) -> Un
     DisposableEffect(Unit) { onDispose { executor.shutdown(); scanner.close() } }
     AndroidView(
         factory = { ctx ->
-            val previewView = PreviewView(ctx).apply { scaleType = PreviewView.ScaleType.FILL_CENTER }
+            // TextureView-backed: the preview fades and slides with the screen transition. The default SurfaceView
+            // sits outside Compose's drawing and vanished in a single frame when the scanner closed.
+            val previewView = PreviewView(ctx).apply {
+                implementationMode = PreviewView.ImplementationMode.COMPATIBLE
+                scaleType = PreviewView.ScaleType.FILL_CENTER
+            }
             val providerFuture = ProcessCameraProvider.getInstance(ctx)
             providerFuture.addListener({
                 val provider = providerFuture.get()

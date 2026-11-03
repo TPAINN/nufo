@@ -108,6 +108,6 @@ if __name__ == "__main__":
     time.sleep(1)
     record("09-tab-history", tap("History", "Ιστορικό"))
     record("10-tab-settings", tap("Settings", "Ρυθμίσεις"))
-    record("11-tab-home", tap("Home", "Αρχική"))
-    record("12-open-scanner", tap("Scan", "Σάρωση"), seconds=3)
+    record("11-tab-home", tap("Scan", "Σάρωση"))  # the home tab is labelled "Scan"
+    record("12-open-scanner", tap("Scan barcode", "Σάρωση barcode"), seconds=3)
     record("13-close-scanner", back)
